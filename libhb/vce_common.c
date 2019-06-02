@@ -7,7 +7,9 @@
  * For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
  */
 
-#ifdef USE_VCE
+#include "project.h"
+
+#if HB_PROJECT_FEATURE_VCE
 #include "AMF/core/Factory.h"
 #include "AMF/components/VideoEncoderVCE.h"
 #include "AMF/components/VideoEncoderHEVC.h"
@@ -34,21 +36,21 @@ AMF_RESULT check_component_available(const wchar_t *componentID)
     if(!init_fun)
     {
         result = AMF_FAIL;
-        hb_log("VCE: Load Library Failed");
+        hb_error("VCE: Load Library Failed");
         goto clean;
     }
 
     result = init_fun(AMF_FULL_VERSION, &factory);
     if(result != AMF_OK)
     {
-        hb_log("VCE: Init Failed");
+        hb_error("VCE: Init Failed");
         goto clean;
     }
 
     result = factory->pVtbl->CreateContext(factory, &context);
     if(result != AMF_OK)
     {
-        hb_log("VCE: Context Failed");
+        hb_error("VCE: Context Failed");
         goto clean;
     }
 
@@ -56,7 +58,7 @@ AMF_RESULT check_component_available(const wchar_t *componentID)
     if (result != AMF_OK) {
         result = context->pVtbl->InitDX9(context, NULL);
         if (result != AMF_OK) {
-            hb_log("VCE: DX11 and DX9 Failed");
+            hb_error("VCE: DX11 and DX9 Failed");
             goto clean;
         }
     }
@@ -116,7 +118,7 @@ int hb_vce_h265_available()
     return (check_component_available(AMFVideoEncoder_HEVC) == AMF_OK) ? 1 : 0;
 }
 
-#else
+#else // !HB_PROJECT_FEATURE_VCE
 
 int hb_vce_h264_available()
 {
@@ -128,4 +130,4 @@ int hb_vce_h265_available()
     return 0;
 }
 
-#endif // USE_QSV
+#endif // HB_PROJECT_FEATURE_VCE

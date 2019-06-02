@@ -150,6 +150,9 @@ struct hb_filter_private_s
     taskset_t           eedi2_taskset;     // Threads for eedi2 - one per plane
 
     hb_buffer_list_t    out_list;
+
+    hb_filter_init_t    input;
+    hb_filter_init_t    output;
 };
 
 typedef struct
@@ -458,7 +461,7 @@ static void eedi2_filter_thread( void *thread_args_v )
     pv = thread_args->pv;
     plane = thread_args->plane;
 
-    hb_log("eedi2 thread started for plane %d", plane);
+    hb_deep_log(3, "eedi2 thread started for plane %d", plane);
 
     while (1)
     {
@@ -698,7 +701,7 @@ static void yadif_decomb_filter_thread( void *thread_args_v )
     pv = thread_args->pv;
     segment = thread_args->segment;
 
-    hb_log("yadif thread started for segment %d", segment);
+    hb_deep_log(3, "yadif thread started for segment %d", segment);
 
     while (1)
     {
@@ -935,6 +938,7 @@ static int hb_decomb_init( hb_filter_object_t * filter,
 {
     filter->private_data = calloc( 1, sizeof(struct hb_filter_private_s) );
     hb_filter_private_t * pv = filter->private_data;
+    pv->input                = *init;
     hb_buffer_list_clear(&pv->out_list);
 
     pv->deinterlaced = 0;
@@ -1094,7 +1098,7 @@ static int hb_decomb_init( hb_filter_object_t * filter,
                     init->geometry.height * stride * sizeof(int), 16);
 
             if( !pv->cx2 || !pv->cy2 || !pv->cxy || !pv->tmpc )
-                hb_log("EEDI2: failed to malloc derivative arrays");
+                hb_error("EEDI2: failed to malloc derivative arrays");
             else
                 hb_log("EEDI2: successfully mallloced derivative arrays");
         }
@@ -1118,6 +1122,7 @@ static int hb_decomb_init( hb_filter_object_t * filter,
         }
     }
 
+    pv->output = *init;
     init->job->use_decomb = 1;
 
     return 0;
@@ -1249,6 +1254,10 @@ static void process_frame( hb_filter_private_t * pv )
             buf = hb_frame_buffer_init(pv->ref[1]->f.fmt,
                                        pv->ref[1]->f.width,
                                        pv->ref[1]->f.height);
+            buf->f.color_prim     = pv->output.color_prim;
+            buf->f.color_transfer = pv->output.color_transfer;
+            buf->f.color_matrix   = pv->output.color_matrix;
+            buf->f.color_range    = pv->output.color_range ;
             yadif_filter(pv, buf, parity, tff);
 
             /* Copy buffered settings to output buffer settings */

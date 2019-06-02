@@ -10,8 +10,9 @@
 #include "hb.h"
 #include "libavformat/avformat.h"
 #include "decomb.h"
+#include "hbavfilter.h"
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #include "qsv_common.h"
 #include "qsv_filter_pp.h"
 #endif
@@ -255,7 +256,7 @@ hb_work_object_t* hb_video_encoder(hb_handle_t *h, int vcodec)
         case HB_VCODEC_THEORA:
             w = hb_get_work(h, WORK_ENCTHEORA);
             break;
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
         case HB_VCODEC_X265_8BIT:
         case HB_VCODEC_X265_10BIT:
         case HB_VCODEC_X265_12BIT:
@@ -263,7 +264,7 @@ hb_work_object_t* hb_video_encoder(hb_handle_t *h, int vcodec)
             w = hb_get_work(h, WORK_ENCX265);
             break;
 #endif
-#ifdef USE_VCE
+#if HB_PROJECT_FEATURE_VCE
         case HB_VCODEC_FFMPEG_VCE_H264:
             w = hb_get_work(h, WORK_ENCAVCODEC);
             w->codec_param = AV_CODEC_ID_H264;
@@ -273,7 +274,7 @@ hb_work_object_t* hb_video_encoder(hb_handle_t *h, int vcodec)
             w->codec_param = AV_CODEC_ID_HEVC;
             break;
 #endif
-#ifdef USE_NVENC
+#if HB_PROJECT_FEATURE_NVENC
         case HB_VCODEC_FFMPEG_NVENC_H264:
             w = hb_get_work(h, WORK_ENCAVCODEC);
             w->codec_param = AV_CODEC_ID_H264;
@@ -420,7 +421,7 @@ void hb_display_job_info(hb_job_t *job)
 
     hb_log(" * video track");
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (hb_qsv_decode_is_enabled(job))
     {
         hb_log("   + decoder: %s",
@@ -444,6 +445,10 @@ void hb_display_job_info(hb_job_t *job)
         for( i = 0; i < hb_list_count( job->list_filter ); i++ )
         {
             hb_filter_object_t * filter = hb_list_item( job->list_filter, i );
+            if (filter->aliased && global_verbosity_level < 2)
+            {
+                continue;
+            }
             char * settings = hb_filter_settings_string(filter->id,
                                                         filter->settings);
             if (settings != NULL)
@@ -1199,7 +1204,7 @@ static int sanitize_audio(hb_job_t *job)
 
 static int sanitize_qsv( hb_job_t * job )
 {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #if 0 // TODO: re-implement QSV VPP filtering and QSV zerocopy path
     int i;
 
@@ -1363,7 +1368,7 @@ static int sanitize_qsv( hb_job_t * job )
         }
     }
 #endif // QSV VPP filtering and QSV zerocopy path
-#endif // USE_QSV
+#endif // HB_PROJECT_FEATURE_QSV
 
     return 0;
 }
@@ -1388,9 +1393,6 @@ static void sanitize_filter_list(hb_list_t *list)
             }
         }
     }
-
-    // Combine HB_FILTER_AVFILTERs that are sequential
-    hb_avfilter_combine(list);
 }
 
 /**
@@ -1459,8 +1461,18 @@ static void do_job(hb_job_t *job)
         sanitize_filter_list(job->list_filter);
 
         memset(&init, 0, sizeof(init));
+        init.time_base.num = 1;
+        init.time_base.den = 90000;
         init.job = job;
+        // TODO: When more complete pix format support is complete this
+        // needs to be updated to reflect the pix_fmt output by
+        // decavcodec.c.  This may be different than title->pix_fmt
+        // since we will likely only support planar YUV color formats.
         init.pix_fmt = AV_PIX_FMT_YUV420P;
+        init.color_prim = title->color_prim;
+        init.color_transfer = title->color_transfer;
+        init.color_matrix = title->color_matrix;
+        init.color_range = title->color_range;
         init.geometry.width = title->geometry.width;
         init.geometry.height = title->geometry.height;
 
@@ -1469,11 +1481,12 @@ static void do_job(hb_job_t *job)
         init.vrate = job->vrate;
         init.cfr = 0;
         init.grayscale = 0;
+
         for( i = 0; i < hb_list_count( job->list_filter ); )
         {
             hb_filter_object_t * filter = hb_list_item( job->list_filter, i );
             filter->done = &job->done;
-            if (filter->init(filter, &init))
+            if (filter->init != NULL && filter->init(filter, &init))
             {
                 hb_log( "Failure to initialise filter '%s', disabling",
                         filter->name );
@@ -1491,12 +1504,16 @@ static void do_job(hb_job_t *job)
         job->cfr = init.cfr;
         job->grayscale = init.grayscale;
 
+        // Combine HB_FILTER_AVFILTERs that are sequential
+        hb_avfilter_combine(job->list_filter);
+
         // Perform filter post_init which informs filters of final
         // job configuration. e.g. rendersub filter needs to know the
         // final crop dimensions.
         for( i = 0; i < hb_list_count( job->list_filter ); )
         {
             hb_filter_object_t * filter = hb_list_item( job->list_filter, i );
+            filter->done = &job->done;
             if (filter->post_init != NULL && filter->post_init(filter, job))
             {
                 hb_log( "Failure to initialise filter '%s', disabling",
@@ -1533,7 +1550,7 @@ static void do_job(hb_job_t *job)
     hb_reduce(&job->vrate.num, &job->vrate.den,
                job->vrate.num,  job->vrate.den);
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #if 0 // TODO: re-implement QSV zerocopy path
     if (hb_qsv_decode_is_enabled(job) && (job->vcodec & HB_VCODEC_QSV_MASK))
     {
@@ -1696,9 +1713,12 @@ static void do_job(hb_job_t *job)
             for (i = 0; i < hb_list_count(job->list_filter); i++)
             {
                 hb_filter_object_t * filter = hb_list_item(job->list_filter, i);
-                filter->fifo_in = fifo_in;
-                filter->fifo_out = hb_fifo_init( FIFO_MINI, FIFO_MINI_WAKE );
-                fifo_in = filter->fifo_out;
+                if (!filter->skip)
+                {
+                    filter->fifo_in = fifo_in;
+                    filter->fifo_out = hb_fifo_init(FIFO_MINI, FIFO_MINI_WAKE);
+                    fifo_in = filter->fifo_out;
+                }
             }
             job->fifo_render = fifo_in;
         }
@@ -1776,10 +1796,13 @@ static void do_job(hb_job_t *job)
         {
             hb_filter_object_t * filter = hb_list_item(job->list_filter, i);
 
-            // Filters were initialized earlier, so we just need
-            // to start the filter's thread
-            filter->thread = hb_thread_init( filter->name, filter_loop, filter,
-                                             HB_LOW_PRIORITY );
+            if (!filter->skip)
+            {
+                // Filters were initialized earlier, so we just need
+                // to start the filter's thread
+                filter->thread = hb_thread_init(filter->name, filter_loop,
+                                                filter, HB_LOW_PRIORITY);
+            }
         }
     }
 
@@ -1869,7 +1892,10 @@ cleanup:
         for (i = 0; i < hb_list_count( job->list_filter ); i++)
         {
             hb_filter_object_t * filter = hb_list_item( job->list_filter, i );
-            hb_fifo_close( &filter->fifo_out );
+            if (!filter->skip)
+            {
+                hb_fifo_close( &filter->fifo_out );
+            }
         }
     }
 
@@ -2017,13 +2043,13 @@ static void filter_loop( void * _f )
 
         buf_out = NULL;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         hb_buffer_t *last_buf_in = buf_in;
 #endif
 
         f->status = f->work( f, &buf_in, &buf_out );
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         if (f->status == HB_FILTER_DELAY &&
             last_buf_in->qsv_details.filter_details != NULL && buf_out == NULL)
         {

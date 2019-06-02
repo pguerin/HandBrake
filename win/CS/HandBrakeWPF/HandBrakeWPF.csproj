@@ -72,12 +72,11 @@
     <Reference Include="Caliburn.Micro.Platform.Core, Version=3.2.0.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
       <HintPath>..\packages\Caliburn.Micro.3.2.0\lib\net45\Caliburn.Micro.Platform.Core.dll</HintPath>
     </Reference>
-    <Reference Include="GongSolutions.Wpf.DragDrop, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\gong-wpf-dragdrop.1.1.0\lib\net46\GongSolutions.Wpf.DragDrop.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="GongSolutions.WPF.DragDrop, Version=2.0.0.0, Culture=neutral, PublicKeyToken=91f1945125b7a587, processorArchitecture=MSIL">
+      <HintPath>..\packages\gong-wpf-dragdrop.2.0.1\lib\net47\GongSolutions.WPF.DragDrop.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.11.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Ookii.Dialogs.Wpf, Version=1.0.0.0, Culture=neutral, PublicKeyToken=0c15020868fd6249, processorArchitecture=MSIL">
       <HintPath>..\packages\Ookii.Dialogs.1.0\lib\net35\Ookii.Dialogs.Wpf.dll</HintPath>
@@ -165,6 +164,8 @@
     <Compile Include="Model\Audio\AudioBehaviourModes.cs" />
     <Compile Include="Model\Audio\AudioBehaviours.cs" />
     <Compile Include="Model\DriveInformation.cs" />
+    <Compile Include="Model\Options\AutonameFileCollisionBehaviour.cs" />
+    <Compile Include="Model\Options\FileOverwriteBehaviour.cs" />
     <Compile Include="Model\Filters\FilterTune.cs" />
     <Compile Include="Model\Filters\FilterPreset.cs" />
     <Compile Include="Model\InterfaceLanguage.cs" />
@@ -222,7 +223,7 @@
     <Compile Include="Services\Presets\Factories\JsonPresetFactory.cs" />
     <Compile Include="Services\Presets\Interfaces\IPresetObject.cs" />
     <Compile Include="Services\Presets\Model\PresetDisplayCategory.cs" />
-    <Compile Include="Services\Queue\Interfaces\IQueueProcessor.cs" />
+    <Compile Include="Services\Queue\Interfaces\IQueueService.cs" />
     <Compile Include="Helpers\FileHelper.cs" />
     <Compile Include="Services\Presets\Model\Preset.cs" />
     <Compile Include="Model\ScanMode.cs" />
@@ -232,7 +233,7 @@
     <Compile Include="Services\Presets\PresetService.cs" />
     <Compile Include="Services\Queue\Model\QueueStats.cs" />
     <Compile Include="Services\Queue\Model\QueueTaskContainer.cs" />
-    <Compile Include="Services\Queue\QueueProcessor.cs" />
+    <Compile Include="Services\Queue\QueueService.cs" />
     <Compile Include="Services\Queue\Model\QueueItemStatus.cs" />
     <Compile Include="Services\Queue\Model\QueueTask.cs" />
     <Compile Include="Services\Scan\EventArgs\ScanCompletedEventArgs.cs" />
@@ -270,6 +271,13 @@
     <Compile Include="Utilities\UwpDetect.cs" />
     <Compile Include="Utilities\Win32.cs" />
     <Compile Include="Utilities\Win7.cs" />
+    <Compile Include="ViewModelItems\Filters\DeblockFilter.cs" />
+    <Compile Include="ViewModelItems\Filters\DeinterlaceFilterItem.cs" />
+    <Compile Include="ViewModelItems\Filters\DenoiseItem.cs" />
+    <Compile Include="ViewModelItems\Filters\DetelecineItem.cs" />
+    <Compile Include="ViewModelItems\Filters\GrayscaleFilter.cs" />
+    <Compile Include="ViewModelItems\Filters\RotateFlipFilter.cs" />
+    <Compile Include="ViewModelItems\Filters\SharpenItem.cs" />
     <Compile Include="ViewModels\Interfaces\IManagePresetViewModel.cs" />
     <Compile Include="ViewModels\Interfaces\ISummaryViewModel.cs" />
     <Compile Include="ViewModels\ManagePresetViewModel.cs" />
@@ -461,8 +469,10 @@
     <EmbeddedResource Include="Properties\Resources.de.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.fr.resx" />
     <EmbeddedResource Include="Properties\Resources.zh.resx" />
     <EmbeddedResource Include="Properties\ResourcesTooltips.de.resx" />
+    <EmbeddedResource Include="Properties\ResourcesTooltips.fr.resx" />
     <EmbeddedResource Include="Properties\ResourcesTooltips.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>ResourcesTooltips.Designer.cs</LastGenOutput>
@@ -633,7 +643,6 @@
     <Resource Include="Views\Images\Complete.png" />
     <Resource Include="Views\Images\Working0.png" />
     <Resource Include="handbrakepineapple.ico" />
-    <Resource Include="Views\Images\delete.png" />
     <Resource Include="Views\Images\Close.png" />
     <Resource Include="Views\Images\Options24.png" />
   </ItemGroup>
@@ -706,6 +715,12 @@
       <Project>{087a2ba8-bac2-4577-a46f-07ff9d420016}</Project>
       <Name>HandBrake.Interop</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Views\Images\close64.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Views\Images\close64_dark.png" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

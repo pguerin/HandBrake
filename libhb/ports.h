@@ -24,7 +24,9 @@
 #define IS_DIR_SEP(c) (c == '/')
 #endif
 
-#ifdef USE_QSV
+#include "project.h"
+
+#if HB_PROJECT_FEATURE_QSV
 #include "mfx/mfxstructures.h"
 #ifdef SYS_LINUX
 #include <va/va_drm.h>
@@ -41,7 +43,7 @@ extern const char* DRM_INTEL_DRIVER_NAME;
 typedef struct
 {
     void          * handle;
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     mfxHandleType   mfxType;
 
 #ifdef SYS_LINUX
@@ -51,8 +53,8 @@ typedef struct
 #endif
 } hb_display_t;
 
-hb_display_t * hb_display_init(const char * driver_name,
-                               const char * interface_name);
+hb_display_t * hb_display_init(const char         *  driver_name,
+                               const char * const * interface_names);
 void           hb_display_close(hb_display_t ** _d);
 
 /************************************************************************
@@ -71,6 +73,7 @@ enum hb_cpu_platform
     HB_CPU_PLATFORM_INTEL_CHT,
     HB_CPU_PLATFORM_INTEL_SKL,
     HB_CPU_PLATFORM_INTEL_KBL,
+    HB_CPU_PLATFORM_INTEL_ICL,
 };
 int         hb_get_cpu_count(void);
 int         hb_get_cpu_platform(void);
@@ -151,7 +154,7 @@ typedef struct hb_thread_s hb_thread_t;
 #  define HB_LOW_PRIORITY    5
 #  define HB_NORMAL_PRIORITY 10
 #elif defined( SYS_DARWIN )
-#  define HB_LOW_PRIORITY    0
+#  define HB_LOW_PRIORITY    31
 #  define HB_NORMAL_PRIORITY 31
 #elif defined( SYS_CYGWIN )
 #  define HB_LOW_PRIORITY    0

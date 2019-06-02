@@ -6,7 +6,10 @@
    It may be used under the terms of the GNU General Public License v2.
    For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
  */
-#ifdef USE_X265
+
+#include "project.h"
+
+#if HB_PROJECT_FEATURE_X265
 
 #include "hb.h"
 #include "hb_dict.h"
@@ -155,9 +158,9 @@ int encx265Init(hb_work_object_t *w, hb_job_t *job)
      * flags, if any, should be set in the x265_param struct).
      */
     char colorprim[11], transfer[11], colormatrix[11];
-    snprintf(colorprim,   sizeof(colorprim),   "%d", job->color_prim);
-    snprintf(transfer,    sizeof(transfer),    "%d", job->color_transfer);
-    snprintf(colormatrix, sizeof(colormatrix), "%d", job->color_matrix);
+    snprintf(colorprim,   sizeof(colorprim),   "%d", hb_output_color_prim(job));
+    snprintf(transfer,    sizeof(transfer),    "%d", hb_output_color_transfer(job));
+    snprintf(colormatrix, sizeof(colormatrix), "%d", hb_output_color_matrix(job));
 
     if (param_parse(pv, param, "colorprim",   colorprim)   ||
         param_parse(pv, param, "transfer",    transfer)    ||
@@ -190,9 +193,9 @@ int encx265Init(hb_work_object_t *w, hb_job_t *job)
      * Reload colorimetry settings in case custom
      * values were set in the encoder_options string.
      */
-    job->color_prim        = param->vui.colorPrimaries;
-    job->color_transfer    = param->vui.transferCharacteristics;
-    job->color_matrix      = param->vui.matrixCoeffs;
+    job->color_prim_override     = param->vui.colorPrimaries;
+    job->color_transfer_override = param->vui.transferCharacteristics;
+    job->color_matrix_override   = param->vui.matrixCoeffs;
 
     /*
      * Settings which can't be overridden in the encodeer_options string

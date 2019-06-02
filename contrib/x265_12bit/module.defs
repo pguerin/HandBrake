@@ -17,7 +17,11 @@ X265_12.CONFIGURE.args.prefix = -DCMAKE_INSTALL_PREFIX="$(X265_12.CONFIGURE.pref
 X265_12.CONFIGURE.deps        =
 X265_12.CONFIGURE.static      =
 X265_12.CONFIGURE.shared      = -DENABLE_SHARED=OFF
-X265_12.CONFIGURE.extra       = -DENABLE_CLI=OFF -DHIGH_BIT_DEPTH=ON -DENABLE_LIBNUMA=OFF -DEXPORT_C_API=OFF -DMAIN12=ON
+X265_12.CONFIGURE.extra       = -DENABLE_CLI=OFF -DHIGH_BIT_DEPTH=ON -DEXPORT_C_API=OFF -DMAIN12=ON
+
+ifneq (1,$(FEATURE.numa))
+    X265_12.CONFIGURE.extra  += -DENABLE_LIBNUMA=OFF
+endif
 
 ifneq (none,$(X265_12.GCC.g))
     X265_12.CONFIGURE.extra += -DCMAKE_BUILD_TYPE=Debug
@@ -25,8 +29,8 @@ else
     X265_12.CONFIGURE.extra += -DCMAKE_BUILD_TYPE=Release
 endif
 
-ifeq (1,$(BUILD.cross))
-    ifeq (mingw,$(BUILD.system))
+ifeq (1,$(HOST.cross))
+    ifeq (mingw,$(HOST.system))
         X265_12.CONFIGURE.extra += -DWIN32=ON
         X265_12.CONFIGURE.extra += -DCMAKE_SYSTEM_NAME=Windows
         X265_12.CONFIGURE.extra += -DCMAKE_C_COMPILER=$(X265_12.GCC.gcc)
@@ -35,7 +39,7 @@ ifeq (1,$(BUILD.cross))
         X265_12.CONFIGURE.extra += -DCMAKE_CXX_COMPILER=$(X265_12.GCC.gxx)
         X265_12.CONFIGURE.extra += -DCMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++ -static"
         X265_12.CONFIGURE.extra += -DCMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS="-static-libgcc -static-libstdc++ -static"
-        X265_12.CONFIGURE.extra += -DCMAKE_RC_COMPILER=$(BUILD.cross.prefix)windres
+        X265_12.CONFIGURE.extra += -DCMAKE_RC_COMPILER=$(HOST.cross.prefix)windres
     endif
     X265_12.CONFIGURE.args.host  = -DCMAKE_SYSTEM_NAME="$(X265_12.CONFIGURE.host)"
     X265_12.CONFIGURE.args.build = -DCMAKE_HOST_SYSTEM="$(X265_12.CONFIGURE.build)"

@@ -102,7 +102,26 @@ namespace HandBrakeWPF.Services.Presets.Factories
 
             /* Filter Settings */
             preset.Task.Grayscale = importedPreset.VideoGrayScale;
-            preset.Task.Deblock = importedPreset.PictureDeblock;
+
+            if (!string.IsNullOrEmpty(importedPreset.PictureDeblockPreset))
+            {
+                preset.Task.DeblockPreset = new FilterPreset(HandBrakeFilterHelpers.GetFilterPresets((int)hb_filter_ids.HB_FILTER_DEBLOCK).FirstOrDefault(s => s.ShortName == importedPreset.PictureDeblockPreset));
+            }
+            else
+            {
+                preset.Task.DeblockPreset = new FilterPreset("Off", "off");
+            }
+
+            if (!string.IsNullOrEmpty(importedPreset.PictureDeblockTune))
+            {
+                preset.Task.DeblockTune = new FilterTune(HandBrakeFilterHelpers.GetFilterTunes((int)hb_filter_ids.HB_FILTER_DEBLOCK).FirstOrDefault(s => s.ShortName == importedPreset.PictureDeblockTune));
+            }
+            else
+            {
+                preset.Task.DeblockTune = new FilterTune("Off", "off");
+            }
+           
+            preset.Task.CustomDeblock = importedPreset.PictureDeblockCustom;
 
             if (importedPreset.PictureSharpenFilter != null)
             {
@@ -389,8 +408,7 @@ namespace HandBrakeWPF.Services.Presets.Factories
                 foreach (var audioTrack in importedPreset.AudioList)
                 {
                     AudioBehaviourTrack track = new AudioBehaviourTrack();
-                    track.Bitrate = audioTrack.AudioBitrate;
-
+                    
                     // track.CompressionLevel = audioTrack.AudioCompressionLevel;
                     // track.AudioDitherMethod = audioTrack.AudioDitherMethod;
                     if (audioTrack.AudioEncoder == "ca_aac")
@@ -400,6 +418,7 @@ namespace HandBrakeWPF.Services.Presets.Factories
 
                     track.Encoder = EnumHelper<AudioEncoder>.GetValue(audioTrack.AudioEncoder);
                     track.MixDown = HandBrakeEncoderHelpers.GetMixdown(audioTrack.AudioMixdown);
+                    track.Bitrate = audioTrack.AudioBitrate;
 
                     // track.AudioNormalizeMixLevel = audioTrack.AudioNormalizeMixLevel;
 
@@ -480,10 +499,8 @@ namespace HandBrakeWPF.Services.Presets.Factories
         /// </returns>
         public static PresetTransportContainer ExportPreset(Preset export, HBConfiguration config)
         {
-            PresetTransportContainer container = new PresetTransportContainer();
-            container.VersionMajor = Constants.PresetVersionMajor;
-            container.VersionMinor = Constants.PresetVersionMinor;
-            container.VersionMicro = Constants.PresetVersionMicro;
+            PresetVersion presetVersion = HandBrakePresetService.GetCurrentPresetVersion();
+            PresetTransportContainer container = new PresetTransportContainer(presetVersion.Major, presetVersion.Minor, presetVersion.Micro);
 
             container.PresetList = new List<object> { CreateHbPreset(export, config) };
 
@@ -498,10 +515,8 @@ namespace HandBrakeWPF.Services.Presets.Factories
         /// <returns>A list of JSON object presets.</returns>
         public static PresetTransportContainer ExportPresets(IEnumerable<Preset> exportList, HBConfiguration config)
         {
-            PresetTransportContainer container = new PresetTransportContainer();
-            container.VersionMajor = Constants.PresetVersionMajor;
-            container.VersionMinor = Constants.PresetVersionMinor;
-            container.VersionMicro = Constants.PresetVersionMicro;
+            PresetVersion presetVersion = HandBrakePresetService.GetCurrentPresetVersion();
+            PresetTransportContainer container = new PresetTransportContainer(presetVersion.Major, presetVersion.Minor, presetVersion.Micro);
 
             List<HBPreset> presets = exportList.Select(item => CreateHbPreset(item, config)).ToList();
 
@@ -590,7 +605,12 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.PicturePARHeight = export.Task.PixelAspectY;
             preset.PicturePARWidth = export.Task.PixelAspectX;
             preset.PictureRightCrop = export.Task.Cropping.Right;
-            preset.PictureRotate = string.Format("{0}:{1}", export.Task.Rotation, export.Task.FlipVideo ? "1" : "0");
+
+            if (export.Task.Rotation != 0 || export.Task.FlipVideo)
+            {
+                preset.PictureRotate = string.Format("{0}:{1}", export.Task.Rotation, export.Task.FlipVideo ? "1" : "0");
+            }
+
             preset.PictureTopCrop = export.Task.Cropping.Top;
             preset.PictureWidth = preset.UsesPictureSettings >= 1 ? export.Task.MaxWidth : 0; // TODO
             preset.PictureDARWidth = export.Task.DisplayWidth.HasValue ? (int)export.Task.DisplayWidth.Value : 0;
@@ -598,7 +618,9 @@ namespace HandBrakeWPF.Services.Presets.Factories
             preset.PictureBottomCrop = export.Task.Cropping.Bottom;
 
             // Filters
-            preset.PictureDeblock = export.Task.Deblock;
+            preset.PictureDeblockPreset = export.Task.DeblockPreset?.Key;
+            preset.PictureDeblockTune = export.Task.DeblockTune?.Key;
+            preset.PictureDeblockCustom = export.Task.CustomDeblock;
 
             preset.PictureDeinterlaceFilter = export.Task.DeinterlaceFilter == DeinterlaceFilter.Decomb
                 ? "decomb"

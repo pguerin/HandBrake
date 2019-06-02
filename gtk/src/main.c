@@ -616,7 +616,7 @@ IoRedirect(signal_user_data_t *ud)
     // Open activity log.
     config = ghb_get_user_config_dir(NULL);
     pid = getpid();
-    path = g_strdup_printf("%s/Activity.log.%d", config, pid);
+    path = g_strdup_printf("%s/Activity.log.%"PRId64, config, (long)pid);
     ud->activity_log = g_io_channel_new_file (path, "w", NULL);
     ud->job_activity_log = NULL;
     str = g_strdup_printf("<big><b>%s</b></big>", path);
@@ -1034,7 +1034,7 @@ ghb_activate_cb(GApplication * app, signal_user_data_t * ud)
     ghb_preview_init(ud);
     IoRedirect(ud);
     ghb_log( "%s - %s - %s",
-        HB_PROJECT_TITLE, HB_PROJECT_BUILD_TITLE, HB_PROJECT_URL_WEBSITE );
+        HB_PROJECT_TITLE, HB_PROJECT_HOST_TITLE, HB_PROJECT_URL_WEBSITE );
     ghb_init_dep_map();
 
     GtkTextView   * textview;

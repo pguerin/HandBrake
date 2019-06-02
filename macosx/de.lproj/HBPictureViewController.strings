@@ -137,11 +137,7 @@
 "rFi-0b-3BX.ibShadowedToolTip" = "Pixelbildformat (PAR) beschreibt die Form der gespeicherten Pixel bzw. wie das anamorphe Video skaliert werden soll um die korrekte Dimension zu bekommen. Nicht-anamorphe Videos (1:1 PAR) werden währen dem Abspielen nicht skaliert.";
 
 /* Class = "NSMatrix"; ibShadowedToolTip = "Cropping mode.\n\nAutomatic detects and removes black borders from the video.\n\nCustom allows for manual settings."; ObjectID = "RTr-3u-52l"; */
-"RTr-3u-52l.ibShadowedToolTip" = "Beschneiden.
-
-Automatisch: Erkennt und entfernt schwarze Ränder vom Video.
-
-Eigene: Erlaubt benutzerdefinierte Einstellungen.";
+"RTr-3u-52l.ibShadowedToolTip" = "Beschneiden.\n\nAutomatisch: Erkennt und entfernt schwarze Ränder vom Video.\n\nEigene: Erlaubt benutzerdefinierte Einstellungen.";
 
 /* Class = "NSButtonCell"; title = "Radio"; ObjectID = "S7K-vF-t1n"; */
 "S7K-vF-t1n.title" = "Radio";
@@ -165,15 +161,7 @@ Eigene: Erlaubt benutzerdefinierte Einstellungen.";
 "uuL-JR-73C.title" = "x";
 
 /* Class = "NSPopUpButton"; ibShadowedToolTip = "Anamorphic allows arbitrary storage dimensions while preserving the original aspect during playback.\n\nOff disables anamorphic. Video storage dimensions and display dimensions will be identical. Only useful for compatibility with certain legacy devices.\n\nAuto maximizes storage resolution while preserving the original display aspect ratio. Recommended.\n\nLoose is similar to Auto, but attempts to preserve the storage aspect ratio. This can result in a slight storage resolution loss compared to Auto.\n\nCustom allows manually setting all parameters. Useful for correcting an incorrect source display aspect and for professionals needing advanced control in post-production."; ObjectID = "w1f-3S-up0"; */
-"w1f-3S-up0.ibShadowedToolTip" = "Anamorphisch erlaubt willkürliche Videospeicherdimensionen, aber behält das ursprüngliche Bildformat während dem Abspielen.
-
-Aus: Deaktiviert die anamorphische Anpassung. Die Speicher- und Anzeigegröße des Videos wird identisch sein. Nur sinnvoll aus Kompatibilitätsgründen.
-
-Auto: Maximiert die Speichergröße und behält dabei das ursprüngliche Bildformat bei. Empfohlen.
-
-Loose: Ist ähnlich zu Auto, aber versucht das Bildformat der Speichergröße zu erhalten. Dies kann zu Einbußen in der Auflösung des Videos führen.
-
-Eigene: Erlaubt eine manuelle Eingabe der Parameter. Nützlich um falsche Bildformate zu korrigieren oder für spezielle professionelle Bedürfnisse in der Postproduktion.";
+"w1f-3S-up0.ibShadowedToolTip" = "Anamorphisch erlaubt willkürliche Videospeicherdimensionen, aber behält das ursprüngliche Bildformat während dem Abspielen.\n\nAus: Deaktiviert die anamorphische Anpassung. Die Speicher- und Anzeigegröße des Videos wird identisch sein. Nur sinnvoll aus Kompatibilitätsgründen.\n\nAuto: Maximiert die Speichergröße und behält dabei das ursprüngliche Bildformat bei. Empfohlen.\n\nLoose: Ist ähnlich zu Auto, aber versucht das Bildformat der Speichergröße zu erhalten. Dies kann zu Einbußen in der Auflösung des Videos führen.\n\nEigene: Erlaubt eine manuelle Eingabe der Parameter. Nützlich um falsche Bildformate zu korrigieren oder für spezielle professionelle Bedürfnisse in der Postproduktion.";
 
 /* Class = "NSTextField"; ibExternalAccessibilityDescription = "Crop right"; ObjectID = "wsq-TS-cC6"; */
 "wsq-TS-cC6.ibExternalAccessibilityDescription" = "Rechts beschneiden";

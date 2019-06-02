@@ -10,26 +10,34 @@
 namespace HandBrake.Interop.Attributes
 {
     using System;
+    using System.Reflection;
 
-    /// <summary>
-    ///  A Short Name for an enum value
-    /// </summary>
     public class DisplayName : Attribute
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DisplayName"/> class.
-        /// </summary>
-        /// <param name="displayName">
-        /// The name name.
-        /// </param>
         public DisplayName(string displayName)
         {
             this.Name = displayName;
         }
 
-        /// <summary>
-        /// Gets the short name.
-        /// </summary>
-        public string Name { get; private set; }
+        public DisplayName(Type resourceManagerProvider, string resourceKey)
+        {
+            this.Name = LookupResource(resourceManagerProvider, resourceKey);
+        }
+
+        public string Name { get; }
+        
+        internal static string LookupResource(Type resourceManagerProvider, string resourceKey)
+        {
+            foreach (PropertyInfo staticProperty in resourceManagerProvider.GetProperties(BindingFlags.Static | BindingFlags.Public))
+            {
+                if (staticProperty.PropertyType == typeof(System.Resources.ResourceManager))
+                {
+                    System.Resources.ResourceManager resourceManager = (System.Resources.ResourceManager)staticProperty.GetValue(null, null);
+                    return resourceManager.GetString(resourceKey);
+                }
+            }
+
+            return resourceKey;
+        }
     }
 }

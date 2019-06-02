@@ -19,11 +19,11 @@
 #include "h264_common.h"
 #include "h265_common.h"
 #include "encx264.h"
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #include "qsv_common.h"
 #endif
 
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
 #include "x265.h"
 #endif
 
@@ -31,11 +31,10 @@
 #include <windows.h>
 #endif
 
-#ifdef USE_NVENC
+#if HB_PROJECT_FEATURE_NVENC
 #include "nvenc_common.h"
 #endif
-
-#ifdef USE_VCE
+#if HB_PROJECT_FEATURE_VCE
 #include "vce_common.h"
 #endif
 
@@ -276,7 +275,7 @@ static int hb_video_encoder_is_enabled(int encoder, int disable_hardware)
     // Hardware Encoders
     if (!disable_hardware)
     {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         if (encoder & HB_VCODEC_QSV_MASK)
         {
             return hb_qsv_video_encoder_is_enabled(encoder);
@@ -284,14 +283,14 @@ static int hb_video_encoder_is_enabled(int encoder, int disable_hardware)
 #endif
 
         switch (encoder){
-#ifdef USE_VCE
+#if HB_PROJECT_FEATURE_VCE
             case HB_VCODEC_FFMPEG_VCE_H264:
                return hb_vce_h264_available();
             case HB_VCODEC_FFMPEG_VCE_H265:
                 return hb_vce_h265_available();
 #endif
 
-#ifdef USE_NVENC
+#if HB_PROJECT_FEATURE_NVENC
             case HB_VCODEC_FFMPEG_NVENC_H264:
                 return hb_nvenc_h264_available();
             case HB_VCODEC_FFMPEG_NVENC_H265:
@@ -318,7 +317,7 @@ static int hb_video_encoder_is_enabled(int encoder, int disable_hardware)
         case HB_VCODEC_FFMPEG_VP9:
             return 1;
 
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
         case HB_VCODEC_X265_8BIT:
         case HB_VCODEC_X265_10BIT:
         case HB_VCODEC_X265_12BIT:
@@ -399,7 +398,7 @@ static int hb_audio_encoder_is_enabled(int encoder)
             return 1;
 #endif
 
-#ifdef USE_FFMPEG_AAC
+#if HB_PROJECT_FEATURE_FFMPEG_AAC
         case HB_ACODEC_FFAAC:
             return avcodec_find_encoder_by_name("aac") != NULL;
 #endif
@@ -1330,7 +1329,7 @@ const hb_rate_t* hb_audio_bitrate_get_next(const hb_rate_t *last)
 void hb_video_quality_get_limits(uint32_t codec, float *low, float *high,
                                  float *granularity, int *direction)
 {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (codec & HB_VCODEC_QSV_MASK)
     {
         return hb_qsv_video_quality_get_limits(codec, low, high, granularity,
@@ -1413,7 +1412,7 @@ void hb_video_quality_get_limits(uint32_t codec, float *low, float *high,
 
 const char* hb_video_quality_get_name(uint32_t codec)
 {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (codec & HB_VCODEC_QSV_MASK)
     {
         return hb_qsv_video_quality_get_name(codec);
@@ -1445,7 +1444,7 @@ int hb_video_encoder_get_depth(int encoder)
 {
     switch (encoder)
     {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         case HB_VCODEC_QSV_H265_10BIT:
 #endif
         case HB_VCODEC_X264_10BIT:
@@ -1462,7 +1461,7 @@ int hb_video_encoder_get_depth(int encoder)
 
 const char* const* hb_video_encoder_get_presets(int encoder)
 {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (encoder & HB_VCODEC_QSV_MASK)
     {
         return hb_qsv_preset_get_names();
@@ -1480,7 +1479,7 @@ const char* const* hb_video_encoder_get_presets(int encoder)
         case HB_VCODEC_X264_10BIT:
             return x264_preset_names;
 
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
         case HB_VCODEC_X265_8BIT:
         case HB_VCODEC_X265_10BIT:
         case HB_VCODEC_X265_12BIT:
@@ -1500,7 +1499,7 @@ const char* const* hb_video_encoder_get_tunes(int encoder)
         case HB_VCODEC_X264_10BIT:
             return x264_tune_names;
 
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
         case HB_VCODEC_X265_8BIT:
         case HB_VCODEC_X265_10BIT:
         case HB_VCODEC_X265_12BIT:
@@ -1514,7 +1513,7 @@ const char* const* hb_video_encoder_get_tunes(int encoder)
 
 const char* const* hb_video_encoder_get_profiles(int encoder)
 {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (encoder & HB_VCODEC_QSV_MASK)
     {
         return hb_qsv_profile_get_names(encoder);
@@ -1537,7 +1536,7 @@ const char* const* hb_video_encoder_get_profiles(int encoder)
         case HB_VCODEC_X265_16BIT:
             return hb_h265_profile_names_16bit;
 
-#ifdef USE_VCE
+#if HB_PROJECT_FEATURE_VCE
         case HB_VCODEC_FFMPEG_VCE_H264:
             return hb_vce_h264_profile_names;
         case HB_VCODEC_FFMPEG_VCE_H265:
@@ -1556,7 +1555,7 @@ const char* const* hb_video_encoder_get_profiles(int encoder)
 
 const char* const* hb_video_encoder_get_levels(int encoder)
 {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (encoder & HB_VCODEC_QSV_MASK)
     {
         return hb_qsv_level_get_names(encoder);
@@ -1571,7 +1570,7 @@ const char* const* hb_video_encoder_get_levels(int encoder)
         case HB_VCODEC_FFMPEG_VT_H264:
             return hb_h264_level_names;
 
-#ifdef USE_VCE
+#if HB_PROJECT_FEATURE_VCE
      case HB_VCODEC_FFMPEG_VCE_H264:
             return hb_vce_h264_level_names; // Not quite the same as x264
 #endif
@@ -3786,9 +3785,14 @@ static void job_setup(hb_job_t * job, hb_title_t * title)
     job->pass_id    = HB_PASS_ENCODE;
     job->vrate      = title->vrate;
 
+    job->pix_fmt        = AV_PIX_FMT_YUV420P;
     job->color_prim     = title->color_prim;
     job->color_transfer = title->color_transfer;
     job->color_matrix   = title->color_matrix;
+    job->color_range    = title->color_range;
+    job->color_prim_override     = HB_COLR_PRI_UNDEF;
+    job->color_transfer_override = HB_COLR_TRA_UNDEF;
+    job->color_matrix_override   = HB_COLR_MAT_UNDEF;
 
     job->mux = HB_MUX_MP4;
 
@@ -3799,12 +3803,36 @@ static void job_setup(hb_job_t * job, hb_title_t * title)
     job->list_attachment = hb_attachment_list_copy( title->list_attachment );
     job->metadata = hb_metadata_copy( title->metadata );
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     job->qsv.enc_info.is_init_done = 0;
     job->qsv.async_depth           = HB_QSV_ASYNC_DEPTH_DEFAULT;
     job->qsv.decode                = !!(title->video_decode_support &
                                         HB_DECODE_SUPPORT_QSV);
 #endif
+}
+
+int hb_output_color_prim(hb_job_t * job)
+{
+    if (job->color_prim_override != HB_COLR_PRI_UNDEF)
+        return job->color_prim_override;
+    else
+        return job->color_prim;
+}
+
+int hb_output_color_transfer(hb_job_t * job)
+{
+    if (job->color_transfer_override != HB_COLR_TRA_UNDEF)
+        return job->color_transfer_override;
+    else
+        return job->color_transfer;
+}
+
+int hb_output_color_matrix(hb_job_t * job)
+{
+    if (job->color_matrix_override != HB_COLR_MAT_UNDEF)
+        return job->color_matrix_override;
+    else
+        return job->color_matrix;
 }
 
 static void job_clean( hb_job_t * job )
@@ -4085,6 +4113,10 @@ hb_filter_object_t * hb_filter_get( int filter_id )
             filter = &hb_filter_deinterlace;
             break;
 
+        case HB_FILTER_COLORSPACE:
+            filter = &hb_filter_colorspace;
+            break;
+
         case HB_FILTER_VFR:
             filter = &hb_filter_vfr;
             break;
@@ -4099,6 +4131,10 @@ hb_filter_object_t * hb_filter_get( int filter_id )
 
         case HB_FILTER_NLMEANS:
             filter = &hb_filter_nlmeans;
+            break;
+
+        case HB_FILTER_CHROMA_SMOOTH:
+            filter = &hb_filter_chroma_smooth;
             break;
 
         case HB_FILTER_RENDER_SUB:
@@ -4133,7 +4169,7 @@ hb_filter_object_t * hb_filter_get( int filter_id )
             filter = &hb_filter_grayscale;
             break;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         case HB_FILTER_QSV:
             filter = &hb_filter_qsv;
             break;
@@ -4164,6 +4200,7 @@ hb_filter_object_t * hb_filter_init( int filter_id )
     {
         case HB_FILTER_UNSHARP:
         case HB_FILTER_LAPSHARP:
+        case HB_FILTER_CHROMA_SMOOTH:
         {
             hb_filter_object_t * wrapper;
 
@@ -5717,5 +5754,133 @@ void hb_chapter_dequeue(hb_chapter_queue_t *q, hb_buffer_t *buf)
         hb_list_rem(q->list_chapter, item);
         buf->s.new_chap = item->new_chap;
         free(item);
+    }
+}
+
+// Only return values supported by 'colorspace' avfilter:
+const char * hb_get_format_name(int format)
+{
+    switch (format)
+    {
+        case AV_PIX_FMT_YUV420P:
+            return "yuv420p";
+        case AV_PIX_FMT_YUV420P10:
+            return "yuv420p10";
+        case AV_PIX_FMT_YUV420P12:
+            return "yuv420p12";
+        case AV_PIX_FMT_YUV422P:
+            return "yuv422p";
+        case AV_PIX_FMT_YUV422P10:
+            return "yuv422p10";
+        case AV_PIX_FMT_YUV422P12:
+            return "yuv422p12";
+        case AV_PIX_FMT_YUV444P:
+            return "yuv444p";
+        case AV_PIX_FMT_YUV444P10:
+            return "yuv444p10";
+        case AV_PIX_FMT_YUV444P12:
+            return "yuv444p12";
+        default:
+            return NULL;
+    }
+}
+
+// Only return values supported by 'colorspace' avfilter:
+const char * hb_get_primaries_name(int primaries)
+{
+    switch (primaries)
+    {
+        case HB_COLR_PRI_BT709:
+            return "bt709";
+        case HB_COLR_PRI_BT470M:
+            return "bt470m";
+        case HB_COLR_PRI_EBUTECH:
+            return "bt470bg";
+        case HB_COLR_PRI_SMPTEC:
+            return "smpte170m";
+        case HB_COLR_PRI_SMPTE240M:
+            return "smpte240m";
+        case HB_COLR_PRI_SMPTE428:
+            return "smpte428";
+        case HB_COLR_PRI_FILM:
+            return "film";
+        case HB_COLR_PRI_SMPTE431:
+            return "smpte431";
+        case HB_COLR_PRI_SMPTE432:
+            return "smpte432";
+        case HB_COLR_PRI_BT2020:
+            return "bt2020";
+        case HB_COLR_PRI_JEDEC_P22:
+            return "jedec-p22";
+        default:
+            return NULL;
+    }
+}
+
+// Only return values supported by 'colorspace' avfilter:
+const char * hb_get_transfer_name(int transfer)
+{
+    switch (transfer)
+    {
+        case HB_COLR_TRA_BT709:
+            return "bt709";
+        case HB_COLR_TRA_GAMMA22:
+            return "gamma22";
+        case HB_COLR_TRA_GAMMA28:
+            return "gamma28";
+        case HB_COLR_TRA_SMPTE170M:
+            return "smpte170m";
+        case HB_COLR_TRA_SMPTE240M:
+            return "smpte240m";
+        case HB_COLR_TRA_IEC61966_2_1:
+            return "iec61966-2-1";
+        case HB_COLR_TRA_IEC61966_2_4:
+            return "iec61966-2-4";
+        case HB_COLR_TRA_BT2020_10:
+            return "bt2020-10";
+        case HB_COLR_TRA_BT2020_12:
+            return "bt2020-12";
+        default:
+            return NULL;
+    }
+}
+
+// Only return values supported by 'colorspace' avfilter:
+const char * hb_get_matrix_name(int matrix)
+{
+    switch (matrix)
+    {
+        case HB_COLR_MAT_BT709:
+            return "bt709";
+        case HB_COLR_MAT_FCC:
+            return "fcc";
+        case HB_COLR_MAT_BT470BG:
+            return "bt470bg";
+        case HB_COLR_MAT_SMPTE170M:
+            return "smpte170m";
+        case HB_COLR_MAT_SMPTE240M:
+            return "smpte240m";
+        case HB_COLR_MAT_YCGCO:
+            return "ycgco";
+        case HB_COLR_MAT_RGB:
+            return "gbr";
+        case HB_COLR_MAT_BT2020_NCL:
+            return "bt2020ncl";
+        default:
+            return NULL;
+    }
+}
+
+// Only return values supported by 'colorspace' avfilter:
+const char * hb_get_color_range_name(int range)
+{
+    switch (range)
+    {
+        case AVCOL_RANGE_MPEG:
+            return "mpeg";
+        case AVCOL_RANGE_JPEG:
+            return "jpeg";
+        default:
+            return "mpeg";
     }
 }

@@ -23,7 +23,6 @@ HandBrake uses many cool libraries from the GNU/Linux world. We thank them and t
 - [libmpeg2dec](http://libmpeg2.sourceforge.net/)
 - [libogg](https://xiph.org/ogg/)
 - [libopus](https://www.opus-codec.org/)
-- [libpthreadsw32](https://sourceware.org/pthreads-win32/)
 - [libsamplerate](http://mega-nerd.com/SRC/)
 - [libspeex](https://www.speex.org/)
 - [libtheora](https://theora.org/)
@@ -33,6 +32,12 @@ HandBrake uses many cool libraries from the GNU/Linux world. We thank them and t
 - [libx265](http://x265.org/)
 - [libxml2](http://xmlsoft.org/)
 - [libzlib](http://zlib.net/)
+
+Windows UI:
+- [Caliburn Micro](https://caliburnmicro.com/)
+- [Ookii Dialogs](http://www.ookii.org/software/dialogs/)
+- [Newtonsoft Json.NET](https://www.newtonsoft.com/json)
+- [GongSolutions.WPF.DragDrop](https://github.com/punker76/gong-wpf-dragdrop)
 
 
 ## Services and Software

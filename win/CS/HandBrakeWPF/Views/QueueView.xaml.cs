@@ -39,9 +39,11 @@ namespace HandBrakeWPF.Views
             // Make the view adaptive. 
             if (e.WidthChanged)
             {
-                this.summaryTabControl.Visibility = this.ActualWidth < 600 ? Visibility.Collapsed : Visibility.Visible;
-                this.leftTabPanel.Width = this.ActualWidth < 600 ? new GridLength(this.ActualWidth - 10, GridUnitType.Star) : new GridLength(3, GridUnitType.Star);
-                this.leftTabPanel.MaxWidth = this.ActualWidth < 600 ? 650 : 400;
+                int queueSizeLimit = 675;
+
+                this.summaryTabControl.Visibility = this.ActualWidth < queueSizeLimit ? Visibility.Collapsed : Visibility.Visible;
+                this.leftTabPanel.Width = this.ActualWidth < queueSizeLimit ? new GridLength(this.ActualWidth - 10, GridUnitType.Star) : new GridLength(3, GridUnitType.Star);
+                this.leftTabPanel.MaxWidth = this.ActualWidth < queueSizeLimit ? 680 : 500;
             }
         }
         private void ContextMenu_OnOpened(object sender, RoutedEventArgs e)
@@ -85,6 +87,10 @@ namespace HandBrakeWPF.Views
                 if (activeQueueTask != null && (activeQueueTask.Status == QueueItemStatus.Error || activeQueueTask.Status == QueueItemStatus.Completed))
                 {
                     this.RetryMenuItem.IsEnabled = true;
+                }
+                else
+                {
+                    this.RetryMenuItem.IsEnabled = false;
                 }
             }
 
@@ -162,6 +168,15 @@ namespace HandBrakeWPF.Views
         {
             ((QueueViewModel)this.DataContext).EditJob(this.mouseActiveQueueTask);
         }
-        
+
+        private void QueueDeleteJob_OnClick(object sender, RoutedEventArgs e)
+        {
+            Button button = sender as Button;
+            QueueTask task = button?.DataContext as QueueTask;
+            if (task != null)
+            {
+                ((QueueViewModel)this.DataContext).RemoveJob(task);
+            }
+        }
     }
 }

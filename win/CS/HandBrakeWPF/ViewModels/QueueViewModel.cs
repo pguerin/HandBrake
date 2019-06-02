@@ -44,7 +44,7 @@ namespace HandBrakeWPF.ViewModels
 
         private readonly IErrorService errorService;
         private readonly IUserSettingService userSettingService;
-        private readonly IQueueProcessor queueProcessor;
+        private readonly IQueueService queueProcessor;
         private string jobStatus;
         private string jobsPending;
         private string whenDoneAction;
@@ -70,7 +70,7 @@ namespace HandBrakeWPF.ViewModels
         /// <param name="errorService">
         /// The Error Service 
         /// </param>
-        public QueueViewModel(IUserSettingService userSettingService, IQueueProcessor queueProcessor, IErrorService errorService)
+        public QueueViewModel(IUserSettingService userSettingService, IQueueService queueProcessor, IErrorService errorService)
         {
             this.userSettingService = userSettingService;
             this.queueProcessor = queueProcessor;
@@ -383,6 +383,11 @@ namespace HandBrakeWPF.ViewModels
         /// </summary>
         public void RemoveSelectedJobs()
         {
+            if (this.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
             MessageBoxResult result =
                   this.errorService.ShowMessageBox(
                       Resources.QueueViewModel_DelSelectedJobConfirmation,
@@ -455,6 +460,11 @@ namespace HandBrakeWPF.ViewModels
         /// </param>
         public void RetryJob(QueueTask task)
         {
+            if (task == null)
+            {
+                return;
+            }
+
             task.Status = QueueItemStatus.Waiting;
             this.queueProcessor.BackupQueue(null);
             this.JobsPending = string.Format(Resources.QueueViewModel_JobsPending, this.queueProcessor.Count);

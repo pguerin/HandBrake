@@ -10,6 +10,7 @@
 #ifndef HB_COMMON_H
 #define HB_COMMON_H
 
+#include "project.h"
 #include "hbtypes.h"
 #include "hb_dict.h"
 #include <math.h>
@@ -102,7 +103,7 @@ typedef enum
 #include "audio_remap.h"
 #include "libavutil/channel_layout.h"
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #include "qsv_libav.h"
 #endif
 
@@ -270,9 +271,11 @@ struct hb_geometry_settings_s
     hb_geometry_t geometry;
 };
 
+// Update win/CS/HandBrake.Interop/Interop/HbLib/hb_image_s.cs when changing this struct
 struct hb_image_s
 {
     int format;
+    int max_plane;
     int width;
     int height;
     uint8_t *data;
@@ -559,32 +562,63 @@ struct hb_job_s
     char           *encoder_level;
     int             areBframes;
 
+    int             pix_fmt;
     int             color_prim;
     int             color_transfer;
     int             color_matrix;
+    int             color_range;
+
+    int             color_prim_override;
+    int             color_transfer_override;
+    int             color_matrix_override;
 // see https://developer.apple.com/library/content/technotes/tn2162/_index.html
 //     https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html#//apple_ref/doc/uid/TP40000939-CH205-125526
 //     libav pixfmt.h
 #define HB_COLR_PRI_BT709        1
 #define HB_COLR_PRI_UNDEF        2
+#define HB_COLR_PRI_BT470M       4
 #define HB_COLR_PRI_EBUTECH      5 // use for bt470bg
-#define HB_COLR_PRI_SMPTEC       6 // smpte170m; also use for bt470m and smpte240m
+#define HB_COLR_PRI_SMPTEC       6 // smpte170m
+#define HB_COLR_PRI_SMPTE240M    7
+#define HB_COLR_PRI_FILM         8 // Illuminant C
 #define HB_COLR_PRI_BT2020       9
+#define HB_COLR_PRI_SMPTE428     10
+#define HB_COLR_PRI_SMPTE431     11
+#define HB_COLR_PRI_SMPTE432     12
+#define HB_COLR_PRI_JEDEC_P22    22
 // 0, 3-4, 7-8, 10-65535: reserved/not implemented
 #define HB_COLR_TRA_BT709        1 // also use for bt470m, bt470bg, smpte170m, bt2020_10 and bt2020_12
 #define HB_COLR_TRA_UNDEF        2
+#define HB_COLR_TRA_GAMMA22      4
+#define HB_COLR_TRA_GAMMA28      5
+#define HB_COLR_TRA_SMPTE170M    6
 #define HB_COLR_TRA_SMPTE240M    7
+#define HB_COLR_TRA_LINEAR       8
+#define HB_COLR_TRA_LOG          9
+#define HB_COLR_TRA_LOG_SQRT     10
+#define HB_COLR_TRA_IEC61966_2_4 11
+#define HB_COLR_TRA_BT1361_ECG   12
+#define HB_COLR_TRA_IEC61966_2_1 13
 #define HB_COLR_TRA_BT2020_10    14
 #define HB_COLR_TRA_BT2020_12    15
 #define HB_COLR_TRA_SMPTEST2084  16
+#define HB_COLR_TRA_SMPTE428     17
 #define HB_COLR_TRA_ARIB_STD_B67 18 //known as "Hybrid log-gamma"
 // 0, 3-6, 8-15, 17-65535: reserved/not implemented
+#define HB_COLR_MAT_RGB          0
 #define HB_COLR_MAT_BT709        1
 #define HB_COLR_MAT_UNDEF        2
+#define HB_COLR_MAT_FCC          4
+#define HB_COLR_MAT_BT470BG      5
 #define HB_COLR_MAT_SMPTE170M    6 // also use for fcc and bt470bg
 #define HB_COLR_MAT_SMPTE240M    7
+#define HB_COLR_MAT_YCGCO        8
 #define HB_COLR_MAT_BT2020_NCL   9
 #define HB_COLR_MAT_BT2020_CL    10
+#define HB_COLR_MAT_SMPTE2085    11
+#define HB_COLR_MAT_CD_NCL       12 // chromaticity derived non-constant lum
+#define HB_COLR_MAT_CD_CL        13 // chromaticity derived constant lum
+#define HB_COLR_MAT_ICTCP        14 // ITU-R BT.2100-0, ICtCp
 // 0, 3-5, 8, 11-65535: reserved/not implemented
 
     hb_list_t     * list_chapter;
@@ -666,7 +700,7 @@ struct hb_job_s
     {
         int decode;
         int async_depth;
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         hb_qsv_context *ctx;
 #endif
         // shared encoding parameters
@@ -1043,9 +1077,11 @@ struct hb_title_s
     hb_geometry_t   geometry;
     hb_rational_t   dar;             // aspect ratio for the title's video
     hb_rational_t   container_dar;   // aspect ratio from container (0 if none)
+    int             pix_fmt;
     int             color_prim;
     int             color_transfer;
     int             color_matrix;
+    int             color_range;
     hb_rational_t   vrate;
     int             crop[4];
     enum {HB_DVD_DEMUXER, HB_TS_DEMUXER, HB_PS_DEMUXER, HB_NULL_DEMUXER} demuxer;
@@ -1148,9 +1184,11 @@ typedef struct hb_work_info_s
         struct
         {    // info only valid for video decoders
             hb_geometry_t geometry;
+            int           pix_fmt;
             int           color_prim;
             int           color_transfer;
             int           color_matrix;
+            int           color_range;
             int           video_decode_support;
         };
         struct
@@ -1250,23 +1288,30 @@ typedef struct hb_filter_init_s
 {
     hb_job_t      * job;
     int             pix_fmt;
+    int             color_prim;
+    int             color_transfer;
+    int             color_matrix;
+    int             color_range;
     hb_geometry_t   geometry;
     int             crop[4];
     hb_rational_t   vrate;
     int             cfr;
     int             grayscale;
+    hb_rational_t   time_base;
 } hb_filter_init_t;
 
 typedef struct hb_filter_info_s
 {
     char             * human_readable_desc;
-    hb_filter_init_t   out;
+    hb_filter_init_t   output;
 } hb_filter_info_t;
 
 struct hb_filter_object_s
 {
     int                   id;
     int                   enforce_order;
+    int                   skip;
+    int                   aliased;
     char                * name;
     hb_dict_t           * settings;
 
@@ -1322,6 +1367,7 @@ enum
     HB_FILTER_DENOISE,
     HB_FILTER_HQDN3D = HB_FILTER_DENOISE,
     HB_FILTER_NLMEANS,
+    HB_FILTER_CHROMA_SMOOTH,
     HB_FILTER_RENDER_SUB,
     HB_FILTER_CROP_SCALE,
     HB_FILTER_LAPSHARP,
@@ -1329,6 +1375,7 @@ enum
     HB_FILTER_ROTATE,
     HB_FILTER_GRAYSCALE,
     HB_FILTER_PAD,
+    HB_FILTER_COLORSPACE,
 
     // Finally filters that don't care what order they are in,
     // except that they must be after the above filters
@@ -1386,10 +1433,14 @@ char * hb_x264_param_unparse(int bit_depth, const char *x264_preset,
 // x264 option name/synonym helper
 const char * hb_x264_encopt_name( const char * name );
 
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
 // x265 option name/synonym helper
 const char * hb_x265_encopt_name( const char * name );
 #endif
+
+int hb_output_color_prim(hb_job_t * job);
+int hb_output_color_transfer(hb_job_t * job);
+int hb_output_color_matrix(hb_job_t * job);
 
 #define HB_NEG_FLOAT_REG "(([-])?(([0-9]+([.,][0-9]+)?)|([.,][0-9]+))"
 #define HB_FLOAT_REG     "(([0-9]+([.,][0-9]+)?)|([.,][0-9]+))"

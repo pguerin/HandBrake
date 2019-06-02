@@ -362,10 +362,6 @@ Presets from older versions must be re-created in the current version.</value>
   <data name="Video_EncoderExtraArgsTooltip" xml:space="preserve">
     <value>Additional advanced arguments that can be passed to the video encoder.</value>
   </data>
-  <data name="Main_SourceDestinationMatchError" xml:space="preserve">
-    <value>You cannot overwrite the source file you want to convert.
-Please choose a different filename.</value>
-  </data>
   <data name="Subtitles_BurnInBehaviourModes" xml:space="preserve">
     <value>None - Only tracks where the container does not support the format will be burned in.
 Foreign Audio Track - The Foreign Audio track will be burned in if available. 
@@ -388,6 +384,7 @@ If you continue, your non-burned subtitles will be lost.</value>
   <data name="Main_ScanNoTitlesFoundMessage" xml:space="preserve">
     <value>HandBrake will not be able to encode the selected source as it did not find a valid source with titles to encode. 
 This could be due to one of the following reasons:
+- The duration of each source title is below the "Minimum Title Duration" threshold option in 'Preferences &gt; Advanced'. 
 - The source file is not a valid video file or is in a format that HandBrake does not support.
 - The source may be copy protected or include DRM. Please note that HandBrake does not support the removal of copy protections.
 
@@ -575,11 +572,6 @@ Please make sure VLC is installed and the directory specified in HandBrake's opt
   </data>
   <data name="PresetService_ArchiveFile" xml:space="preserve">
     <value>Archived File:</value>
-  </data>
-  <data name="PresetService_PresetsOutOfDate" xml:space="preserve">
-    <value>HandBrake has detected your presets file is from an older version.
-It will try and load the file anyway.
-If it fails, it will archive off the old file and create a new one.</value>
   </data>
   <data name="PresetService_UnableToLoad" xml:space="preserve">
     <value>Unable to load presets.</value>
@@ -1153,13 +1145,13 @@ Would you like to overwrite it?</value>
     <value>Meta Data</value>
   </data>
   <data name="OptionsView_EnableNvencEncoding" xml:space="preserve">
-    <value>Enable Nvidia NVENC Encoder</value>
+    <value>Allow use of the Nvidia NVENC Encoders</value>
   </data>
   <data name="OptionsView_EnableQuicksyncEncoding" xml:space="preserve">
-    <value>Enable Intel QuickSync Encoder</value>
+    <value>Allow use of the Intel QuickSync Encoders</value>
   </data>
   <data name="OptionsView_EnableVceEncoding" xml:space="preserve">
-    <value>Enable AMD VCE Encoder</value>
+    <value>Allow use of the AMD VCE Encoders</value>
   </data>
   <data name="OptionsView_InvalidFileFormatChars" xml:space="preserve">
     <value>The file format entered contained invalid characters. These have been removed. </value>
@@ -1233,12 +1225,6 @@ Would you like to overwrite it?</value>
   <data name="Options_Encoding" xml:space="preserve">
     <value>Encoding</value>
   </data>
-  <data name="Options_Experimental" xml:space="preserve">
-    <value>Experimental Features</value>
-  </data>
-  <data name="Options_ExperimentalFeatures" xml:space="preserve">
-    <value>Experimental features are ideas we are working on. These may or may not make it into a final release and may not work!</value>
-  </data>
   <data name="Options_Format" xml:space="preserve">
     <value>File Format:</value>
   </data>
@@ -1291,7 +1277,7 @@ Would you like to overwrite it?</value>
     <value>Priority Level:</value>
   </data>
   <data name="Options_QsvDecode" xml:space="preserve">
-    <value>Enable QuickSync Decoding</value>
+    <value>Prefer use of Intel QuickSync for decoding video when available. </value>
   </data>
   <data name="Options_QsvDecodeForNonFullPath" xml:space="preserve">
     <value>Also Use QSV Decoding when not using a QuickSync encoder. (i.e. x265) </value>
@@ -1318,7 +1304,7 @@ Would you like to overwrite it?</value>
     <value>Show the new experimental queue design.</value>
   </data>
   <data name="Options_ShowQueueInline" xml:space="preserve">
-    <value>Show Queue in line with the main UI.</value>
+    <value>Show Queue in line with the main UI. (Experimental Feature)</value>
   </data>
   <data name="Options_TitleCase" xml:space="preserve">
     <value>Change case to Title Case</value>
@@ -1458,7 +1444,7 @@ This will not affect your current settings in the Subtitle tab.</value>
     <value>Delete</value>
   </data>
   <data name="QueueView_Destination" xml:space="preserve">
-    <value>Destination: </value>
+    <value>Dest: </value>
   </data>
   <data name="QueueView_DoNothing" xml:space="preserve">
     <value>Do nothing</value>
@@ -1527,7 +1513,7 @@ This will not affect your current settings in the Subtitle tab.</value>
     <value>Shutdown</value>
   </data>
   <data name="QueueView_Source" xml:space="preserve">
-    <value>Source: </value>
+    <value>Src: </value>
   </data>
   <data name="QueueView_Start" xml:space="preserve">
     <value>Start Queue</value>
@@ -1899,7 +1885,7 @@ This will not affect your current settings in the Subtitle tab.</value>
     <value>Show 'Add Selection to Queue' on the toolbar</value>
   </data>
   <data name="OptionsView_HardwareDetectFailed" xml:space="preserve">
-    <value>Hardware encoding support has been automatically disabled on your system due to an issue detected during hardware detection. Please make sure you are running up-to-date drivers for all graphics adaptors in this system.
+    <value>Hardware encoding support is currently disabled. Please make sure you are running up-to-date drivers for all graphics adaptors in this system.
 
 This will not impact any of the software encoders.</value>
   </data>
@@ -1937,5 +1923,80 @@ Time Remaining: {5},  Elapsed: {6:d\:hh\:mm\:ss} {7}</value>
   </data>
   <data name="Portable_IniFileError" xml:space="preserve">
     <value>Portable Mode: Unable to read portable.ini. There may be an error in this file. Please retry using portable.ini.template as a guide.</value>
+  </data>
+  <data name="Startup_InitFailed" xml:space="preserve">
+    <value>HandBrake's engine failed to initialise. This is often caused by out of date GPU drivers.\n  Please update the GPU drivers for any onboard and discrete graphics your system has.</value>
+  </data>
+  <data name="OptionsView_FormatOptions" xml:space="preserve">
+    <value>Live Update Options: {source} {title} {chapters} 
+Non-Live Options: {date} {time} {creation-date} {creation-time} {quality} {bitrate} (These only change if you scan a new source, change title or chapters)</value>
+  </data>
+  <data name="OptionsView_PathOptions" xml:space="preserve">
+    <value>Available Options: {source_path} {source_folder_name}  (Not both at the same time!)</value>
+  </data>
+  <data name="FileOverwriteBehaviours_Ask" xml:space="preserve">
+    <value>Ask to overwrite file</value>
+  </data>
+  <data name="FileOverwriteBehaviours_Autoname" xml:space="preserve">
+    <value>Try to automatically rename file</value>
+  </data>
+  <data name="FileOverwriteBehaviours_Overwrite" xml:space="preserve">
+    <value>Overwrite the file</value>
+  </data>
+  <data name="Options_UIBehaviour" xml:space="preserve">
+    <value>User Interface Behaviour</value>
+  </data>
+  <data name="OptionsView_FileOverwriteBehaviour" xml:space="preserve">
+    <value>File overwrite behaviour:</value>
+  </data>
+  <data name="Options_EncodeCompleted" xml:space="preserve">
+    <value>Encode Completed</value>
+  </data>
+  <data name="Options_Notifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="Options_QueueCompleted" xml:space="preserve">
+    <value>Queue Completed</value>
+  </data>
+  <data name="Options_WhenDoneColon" xml:space="preserve">
+    <value>When Done:</value>
+  </data>
+  <data name="OptionsView_FileCollisionBehaviour" xml:space="preserve">
+    <value>Filename collision behaviour:</value>
+  </data>
+  <data name="CollisionBehaviour_Post" xml:space="preserve">
+    <value>Postfix</value>
+  </data>
+  <data name="CollisionBehaviour_Pre" xml:space="preserve">
+    <value>Prefix</value>
+  </data>
+  <data name="CollisionBehaviour_AppendNumber" xml:space="preserve">
+    <value>Append Number</value>
+  </data>
+  <data name="FiltersViewAuto_DeblockPreset" xml:space="preserve">
+    <value>FiltersView_DeblockPreset</value>
+  </data>
+  <data name="FiltersViewAuto_DeblockTune" xml:space="preserve">
+    <value>Deblock Tune</value>
+  </data>
+  <data name="OptionsView_ChoiceOfEncoderHint" xml:space="preserve">
+    <value>Choice of encoder will be made available on the 'Video' tab.</value>
+  </data>
+  <data name="Queue_RecoverQueueQuestionPlural" xml:space="preserve">
+    <value>HandBrake has detected multiple unfinished queue files. These will be from multiple instances of HandBrake running. Would you like to recover all unfinished jobs?</value>
+  </data>
+  <data name="Queue_RecoverQueueQuestionSingular" xml:space="preserve">
+    <value>HandBrake has detected unfinished items on the queue from the last time the application was launched. Would you like to recover these?</value>
+  </data>
+  <data name="Queue_RecoveryPossible" xml:space="preserve">
+    <value>Queue Recovery Possible</value>
+  </data>
+  <data name="PresetService_ImportingBuiltInWarning" xml:space="preserve">
+    <value>Your presets file contained built-in presets. The import function does not support importing these. Please use 'Presets Menu -&gt; Reset Built In-Presets' to restore the standard presets.
+
+Where supported, any user presets will have been imported.</value>
+  </data>
+  <data name="Options_PromptBeforeAction" xml:space="preserve">
+    <value>Perform action immediately. (This will disable the 60 second confirmation dialog)</value>
   </data>
 </root>

@@ -9,11 +9,12 @@
 
 namespace HandBrake.Interop.Model
 {
-    /// <summary>
-    /// HandBrakes configuration options
-    /// </summary>
     public class HBConfiguration
     {
+        public HBConfiguration()
+        {
+        }
+
         /// <summary>
         /// Gets or sets a value indicating whether is dvd nav disabled.
         /// </summary>
@@ -73,5 +74,11 @@ namespace HandBrake.Interop.Model
         /// Gets or sets a value indicating what port the worker process is to use.
         /// </summary>
         public int RemoteServicePort { get; set; }
+
+        public bool EnableVceEncoder { get; set; }
+
+        public bool EnableNvencEncoder { get; set; }
+
+        public bool EnableQsvEncoder { get; set; }
     }
 }

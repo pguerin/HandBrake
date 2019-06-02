@@ -135,8 +135,8 @@ hb_dict_t * hb_version_dict()
         "VersionString", hb_value_string(HB_PROJECT_VERSION),
         "RepoHash",      hb_value_string(HB_PROJECT_REPO_HASH),
         "RepoDate",      hb_value_string(HB_PROJECT_REPO_DATE),
-        "System",        hb_value_string(HB_PROJECT_BUILD_SYSTEMF),
-        "Arch",          hb_value_string(HB_PROJECT_BUILD_ARCH));
+        "System",        hb_value_string(HB_PROJECT_HOST_SYSTEMF),
+        "Arch",          hb_value_string(HB_PROJECT_HOST_ARCH));
     if (dict == NULL)
     {
         hb_error("json pack failure: %s", error.text);
@@ -231,8 +231,8 @@ static hb_dict_t* hb_title_to_dict_internal( hb_title_t *title )
         "s:{s:o, s:o, s:{s:o, s:o}},"
         // Crop[Top, Bottom, Left, Right]}
         "s:[oooo],"
-        // Color {Primary, Transfer, Matrix}
-        "s:{s:o, s:o, s:o},"
+        // Color {Format, Range, Primary, Transfer, Matrix}
+        "s:{s:o, s:o, s:o, s:o, s:o},"
         // FrameRate {Num, Den}
         "s:{s:o, s:o},"
         // InterlaceDetected, VideoCodec
@@ -262,6 +262,8 @@ static hb_dict_t* hb_title_to_dict_internal( hb_title_t *title )
                             hb_value_int(title->crop[2]),
                             hb_value_int(title->crop[3]),
     "Color",
+        "Format",           hb_value_int(title->pix_fmt),
+        "Range",            hb_value_int(title->color_range),
         "Primary",          hb_value_int(title->color_prim),
         "Transfer",         hb_value_int(title->color_transfer),
         "Matrix",           hb_value_int(title->color_matrix),
@@ -645,12 +647,31 @@ hb_dict_t* hb_job_to_dict( const hb_job_t * job )
     hb_dict_set(source_dict, "Range", range_dict);
 
     hb_dict_t *video_dict = hb_dict_get(dict, "Video");
+    hb_dict_set(video_dict, "ColorFormat",
+                hb_value_int(job->pix_fmt));
+    hb_dict_set(video_dict, "ColorRange",
+                hb_value_int(job->color_range));
     hb_dict_set(video_dict, "ColorPrimaries",
                 hb_value_int(job->color_prim));
     hb_dict_set(video_dict, "ColorTransfer",
                 hb_value_int(job->color_transfer));
     hb_dict_set(video_dict, "ColorMatrix",
                 hb_value_int(job->color_matrix));
+    if (job->color_prim_override != HB_COLR_PRI_UNDEF)
+    {
+        hb_dict_set(video_dict, "ColorPrimariesOverride",
+                    hb_value_int(job->color_prim_override));
+    }
+    if (job->color_transfer_override != HB_COLR_TRA_UNDEF)
+    {
+        hb_dict_set(video_dict, "ColorTransferOverride",
+                    hb_value_int(job->color_transfer_override));
+    }
+    if (job->color_matrix_override != HB_COLR_MAT_UNDEF)
+    {
+        hb_dict_set(video_dict, "ColorMatrixOverride",
+                    hb_value_int(job->color_matrix_override));
+    }
 
     if (job->vquality > HB_INVALID_VIDEO_QUALITY)
     {
@@ -1004,10 +1025,16 @@ hb_job_t* hb_dict_to_job( hb_handle_t * h, hb_dict_t *dict )
     // PAR {Num, Den}
     "s?{s:i, s:i},"
     // Video {Codec, Quality, Bitrate, Preset, Tune, Profile, Level, Options
-    //        TwoPass, Turbo, ColorPrimaries, ColorTransfer, ColorMatrix,
-    //        QSV {Decode, AsyncDepth}}
+    //       TwoPass, Turbo,
+    //       ColorFormat, ColorRange,
+    //       ColorPrimaries, ColorTransfer, ColorMatrix,
+    //       ColorPrimariesOverride, ColorTransferOverride, ColorMatrixOverride,
+    //       QSV {Decode, AsyncDepth}}
     "s:{s:o, s?f, s?i, s?s, s?s, s?s, s?s, s?s,"
-    "   s?b, s?b, s?i, s?i, s?i,"
+    "   s?b, s?b,"
+    "   s?i, s?i,"
+    "   s?i, s?i, s?i,"
+    "   s?i, s?i, s?i,"
     "   s?{s?b, s?i}},"
     // Audio {CopyMask, FallbackEncoder, AudioList}
     "s?{s?o, s?o, s?o},"
@@ -1051,9 +1078,14 @@ hb_job_t* hb_dict_to_job( hb_handle_t * h, hb_dict_t *dict )
             "Options",              unpack_s(&video_options),
             "TwoPass",              unpack_b(&job->twopass),
             "Turbo",                unpack_b(&job->fastfirstpass),
+            "ColorFormat",          unpack_i(&job->pix_fmt),
+            "ColorRange",           unpack_i(&job->color_range),
             "ColorPrimaries",       unpack_i(&job->color_prim),
             "ColorTransfer",        unpack_i(&job->color_transfer),
             "ColorMatrix",          unpack_i(&job->color_matrix),
+            "ColorPrimariesOverride", unpack_i(&job->color_prim_override),
+            "ColorTransferOverride",  unpack_i(&job->color_transfer_override),
+            "ColorMatrixOverride",    unpack_i(&job->color_matrix_override),
             "QSV",
                 "Decode",           unpack_b(&job->qsv.decode),
                 "AsyncDepth",       unpack_i(&job->qsv.async_depth),
@@ -1334,7 +1366,16 @@ hb_job_t* hb_dict_to_job( hb_handle_t * h, hb_dict_t *dict )
             {
                 hb_filter_object_t *filter;
                 filter = hb_filter_init(filter_id);
-                hb_add_filter_dict(job, filter, filter_settings);
+#if HB_PROJECT_FEATURE_QSV
+                if(hb_qsv_full_path_is_enabled(job))
+                {
+                    hb_log("Filter with ID=%d is disabled", filter_id);
+                }
+                else
+#endif
+                {
+                    hb_add_filter_dict(job, filter, filter_settings);
+                }
             }
         }
     }

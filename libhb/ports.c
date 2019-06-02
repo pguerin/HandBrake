@@ -7,6 +7,8 @@
    For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+#include "project.h"
+
 #ifdef SYS_MINGW
 #define _WIN32_WINNT 0x600
 #endif
@@ -70,7 +72,7 @@
 #include <linux/cdrom.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #include <libdrm/drm.h>
 #endif
 #elif defined( SYS_OPENBSD )
@@ -259,8 +261,6 @@ const char* hb_get_cpu_platform_name()
 {
     switch (hb_cpu_info.platform)
     {
-        // Intel 64 and IA-32 Architectures Software Developer's Manual, Vol. 3C
-        // Table 35-1: CPUID Signature Values of DisplayFamily_DisplayModel
         case HB_CPU_PLATFORM_INTEL_BNL:
             return "Intel microarchitecture Bonnell";
         case HB_CPU_PLATFORM_INTEL_SNB:
@@ -279,6 +279,8 @@ const char* hb_get_cpu_platform_name()
             return "Intel microarchitecture Airmont";
         case HB_CPU_PLATFORM_INTEL_KBL:
             return "Intel microarchitecture Kaby Lake";
+        case HB_CPU_PLATFORM_INTEL_ICL:
+            return "Intel microarchitecture Ice Lake";
         default:
             return NULL;
     }
@@ -317,8 +319,8 @@ static void init_cpu_info()
         family = ((eax >> 8) & 0xf) + ((eax >> 20) & 0xff);
         model  = ((eax >> 4) & 0xf) + ((eax >> 12) & 0xf0);
 
-        // Intel 64 and IA-32 Architectures Software Developer's Manual, Vol. 3C
-        // Table 35-1: CPUID Signature Values of DisplayFamily_DisplayModel
+        // Intel 64 and IA-32 Architectures Software Developer's Manual, Volume 4/January 2019
+        // Table 2-1. CPUID Signature Values of DisplayFamily_DisplayModel
         switch (family)
         {
             case 0x06:
@@ -369,6 +371,8 @@ static void init_cpu_info()
                     case 0x9E:
                         hb_cpu_info.platform = HB_CPU_PLATFORM_INTEL_KBL;
                         break;
+                    case 0x7E:
+                        hb_cpu_info.platform = HB_CPU_PLATFORM_INTEL_ICL;
                     default:
                         break;
                 }
@@ -860,6 +864,10 @@ static void attribute_align_thread hb_thread_func( void * _t )
     memset( &param, 0, sizeof( struct sched_param ) );
     param.sched_priority = t->priority;
     pthread_setschedparam( pthread_self(), SCHED_OTHER, &param );
+#endif
+
+#if defined( SYS_DARWIN )
+    pthread_setname_np( t->name );
 #endif
 
 #if defined( SYS_BEOS )
@@ -1509,7 +1517,7 @@ char * hb_strndup(const char * src, size_t len)
 #endif
 }
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #ifdef SYS_LINUX
 
 #define MAX_NODES             16
@@ -1568,10 +1576,39 @@ static int open_adapter(const char * name)
     return fd;
 }
 
-hb_display_t * hb_display_init(const char * driver_name,
-                               const char * interface_name)
+static int try_va_interface(hb_display_t * hbDisplay,
+                            const char * interface_name)
+{
+    if (interface_name != NULL)
+    {
+        setenv("LIBVA_DRIVER_NAME", interface_name, 1);
+    }
+
+    hbDisplay->vaDisplay = vaGetDisplayDRM(hbDisplay->vaFd);
+    if (hbDisplay->vaDisplay == NULL)
+    {
+        return -1;
+    }
+
+    int major = 0, minor = 0;
+    VAStatus vaRes = vaInitialize(hbDisplay->vaDisplay, &major, &minor);
+    if (vaRes != VA_STATUS_SUCCESS)
+    {
+        vaTerminate(hbDisplay->vaDisplay);
+        return -1;
+    }
+    hbDisplay->handle = hbDisplay->vaDisplay;
+    hbDisplay->mfxType = MFX_HANDLE_VA_DISPLAY;
+
+    return 0;
+}
+
+hb_display_t * hb_display_init(const char         *  driver_name,
+                               const char * const * interface_names)
 {
     hb_display_t * hbDisplay = calloc(sizeof(hb_display_t), 1);
+    char         * env;
+    int            ii;
 
     hbDisplay->vaDisplay = NULL;
     hbDisplay->vaFd      = open_adapter(driver_name);
@@ -1582,27 +1619,39 @@ hb_display_t * hb_display_init(const char * driver_name,
         return NULL;
     }
 
-    setenv("LIBVA_DRIVER_NAME", interface_name, 1);
-    hbDisplay->vaDisplay = vaGetDisplayDRM(hbDisplay->vaFd);
-    if (hbDisplay->vaDisplay == NULL)
+    if ((env = getenv("LIBVA_DRIVER_NAME")) != NULL)
     {
-        close(hbDisplay->vaFd);
-        free(hbDisplay);
-        return NULL;
+        // Use only environment if it's set
+        hb_log("hb_display_init: using VA driver '%s'", env);
+        if (try_va_interface(hbDisplay, NULL) != 0)
+        {
+            close(hbDisplay->vaFd);
+            free(hbDisplay);
+            return NULL;
+        }
     }
-
-    int major = 0, minor = 0;
-    VAStatus vaRes = vaInitialize(hbDisplay->vaDisplay, &major, &minor);
-    if (vaRes != VA_STATUS_SUCCESS)
+    else
     {
-        vaTerminate(hbDisplay->vaDisplay);
-        close(hbDisplay->vaFd);
-        free(hbDisplay);
-        return NULL;
+        // Try list of VA driver names
+        for (ii = 0; interface_names[ii] != NULL; ii++)
+        {
+            hb_log("hb_display_init: attempting VA driver '%s'",
+                   interface_names[ii]);
+            if (try_va_interface(hbDisplay, interface_names[ii]) == 0)
+            {
+                return hbDisplay;
+            }
+        }
+        // Try default
+        unsetenv("LIBVA_DRIVER_NAME");
+        hb_log("hb_display_init: attempting VA default driver");
+        if (try_va_interface(hbDisplay, NULL) != 0)
+        {
+            close(hbDisplay->vaFd);
+            free(hbDisplay);
+            return NULL;
+        }
     }
-    hbDisplay->handle = hbDisplay->vaDisplay;
-    hbDisplay->mfxType = MFX_HANDLE_VA_DISPLAY;
-
     return hbDisplay;
 }
 
@@ -1629,8 +1678,8 @@ void hb_display_close(hb_display_t ** _d)
 
 #else // !SYS_LINUX
 
-hb_display_t * hb_display_init(const char * driver_name,
-                               const char * interface_name)
+hb_display_t * hb_display_init(const char         *  driver_name,
+                               const char * const * interface_names)
 {
     return NULL;
 }
@@ -1641,10 +1690,10 @@ void hb_display_close(hb_display_t ** _d)
 }
 
 #endif // SYS_LINUX
-#else // !USE_QSV
+#else // !HB_PROJECT_FEATURE_QSV
 
-hb_display_t * hb_display_init(const char * driver_name,
-                               const char * interface_name)
+hb_display_t * hb_display_init(const char         *  driver_name,
+                               const char * const * interface_names)
 {
     return NULL;
 }
@@ -1654,4 +1703,4 @@ void hb_display_close(hb_display_t ** _d)
     (void)_d;
 }
 
-#endif // USE_QSV
+#endif // HB_PROJECT_FEATURE_QSV

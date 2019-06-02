@@ -24,6 +24,7 @@ namespace HandBrakeWPF.ViewModels
     using HandBrake.Interop.Utilities;
 
     using HandBrakeWPF.Model;
+    using HandBrakeWPF.Model.Options;
     using HandBrakeWPF.Properties;
     using HandBrakeWPF.Services.Interfaces;
     using HandBrakeWPF.Utilities;
@@ -101,12 +102,14 @@ namespace HandBrakeWPF.ViewModels
         private bool enableQuickSyncEncoding;
         private bool enableVceEncoder;    
         private bool enableNvencEncoder;
-
         private InterfaceLanguage selectedLanguage;
-
         private bool showAddSelectionToQueue;
-
         private bool showAddAllToQueue;
+        private int selectedOverwriteBehaviour;
+        private int selectedCollisionBehaviour;
+        private string prePostFilenameText;
+        private bool showPrePostFilenameBox;
+        private bool whenDonePerformActionImmediately;
 
         #endregion
 
@@ -374,6 +377,17 @@ namespace HandBrakeWPF.ViewModels
             {
                 this.whenDoneOptions = value;
                 this.NotifyOfPropertyChange("WhenDoneOptions");
+            }
+        }
+
+        public bool WhenDonePerformActionImmediately
+        {
+            get => this.whenDonePerformActionImmediately;
+            set
+            {
+                if (value == this.whenDonePerformActionImmediately) return;
+                this.whenDonePerformActionImmediately = value;
+                this.NotifyOfPropertyChange(() => this.WhenDonePerformActionImmediately);
             }
         }
 
@@ -646,6 +660,62 @@ namespace HandBrakeWPF.ViewModels
             {
                 this.removePunctuation = value;
                 this.NotifyOfPropertyChange(() => RemovePunctuation);
+            }
+        }
+
+        public BindingList<FileOverwriteBehaviour> FileOverwriteBehaviourList { get; set; }
+
+        public int SelectedOverwriteBehaviour
+        {
+            get => this.selectedOverwriteBehaviour;
+            set
+            {
+                if (value == this.selectedOverwriteBehaviour) return;
+                this.selectedOverwriteBehaviour = value;
+                this.NotifyOfPropertyChange(() => this.SelectedOverwriteBehaviour);
+            }
+        }
+
+        public BindingList<AutonameFileCollisionBehaviour> AutonameFileCollisionBehaviours { get; set; }
+
+        public int SelectedCollisionBehaviour
+        {
+            get => this.selectedCollisionBehaviour;
+            set
+            {
+                if (value == this.selectedCollisionBehaviour) return;
+                this.selectedCollisionBehaviour = value;
+
+                this.ShowPrePostFilenameBox = this.selectedCollisionBehaviour >= 1;
+
+                this.NotifyOfPropertyChange(() => this.SelectedCollisionBehaviour);
+            }
+        }
+
+        public string PrePostFilenameText
+        {
+            get => this.prePostFilenameText;
+            set
+            {
+                if (value == this.prePostFilenameText) return;
+
+                if (this.IsValidAutonameFormat(value, false))
+                {
+                    this.prePostFilenameText = value;
+                }
+
+                this.NotifyOfPropertyChange(() => this.PrePostFilenameText);
+            }
+        }
+
+        public bool ShowPrePostFilenameBox
+        {
+            get => this.showPrePostFilenameBox;
+            set
+            {
+                if (value == this.showPrePostFilenameBox) return;
+                this.showPrePostFilenameBox = value;
+                this.NotifyOfPropertyChange(() => this.ShowPrePostFilenameBox);
             }
         }
 
@@ -1150,7 +1220,7 @@ namespace HandBrakeWPF.ViewModels
             }
         }
 
-        public bool IsHardwareFallbackMode => HandBrakeUtils.IsUsingNoHardwareFallback();
+        public bool IsHardwareFallbackMode => HandBrakeUtils.IsInitNoHardware();
 
         #endregion
 
@@ -1368,6 +1438,16 @@ namespace HandBrakeWPF.ViewModels
                 this.CheckForUpdatesFrequency = 1;
             }
 
+            this.ShowQueueInline = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowQueueInline);
+            this.ShowStatusInTitleBar = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowStatusInTitleBar);
+            this.ShowPreviewOnSummaryTab = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowPreviewOnSummaryTab);
+            this.ShowAddAllToQueue = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowAddAllToQueue);
+            this.ShowAddSelectionToQueue = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowAddSelectionToQueue);
+
+            // #############################
+            // When Done
+            // #############################
+
             // On Encode Completion Action
             this.whenDoneOptions.Clear();
             this.whenDoneOptions.Add("Do nothing");
@@ -1377,7 +1457,8 @@ namespace HandBrakeWPF.ViewModels
             this.whenDoneOptions.Add("Lock System");
             this.whenDoneOptions.Add("Log off");
             this.whenDoneOptions.Add("Quit HandBrake");
-            this.WhenDone = userSettingService.GetUserSetting<string>("WhenCompleteAction");
+
+            this.WhenDone = userSettingService.GetUserSetting<string>(UserSettingConstants.WhenCompleteAction);
             if (this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ResetWhenDoneAction))
             {
                 this.WhenDone = "Do nothing";
@@ -1388,16 +1469,11 @@ namespace HandBrakeWPF.ViewModels
             this.SendFileToPath = this.userSettingService.GetUserSetting<string>(UserSettingConstants.SendFileTo) ?? string.Empty;
             this.Arguments = this.userSettingService.GetUserSetting<string>(UserSettingConstants.SendFileToArgs) ?? string.Empty;
             this.ResetWhenDoneAction = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ResetWhenDoneAction);
-            this.ShowQueueInline = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowQueueInline);
-            this.ShowStatusInTitleBar = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowStatusInTitleBar);
-            this.ShowPreviewOnSummaryTab = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowPreviewOnSummaryTab);
+            this.WhenDonePerformActionImmediately = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.WhenDonePerformActionImmediately);
             this.WhenDoneAudioFile = Path.GetFileNameWithoutExtension(this.userSettingService.GetUserSetting<string>(UserSettingConstants.WhenDoneAudioFile)) ?? string.Empty;
             this.WhenDoneAudioFileFullPath = this.userSettingService.GetUserSetting<string>(UserSettingConstants.WhenDoneAudioFile);
             this.PlaySoundWhenDone = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.PlaySoundWhenDone);
             this.PlaySoundWhenQueueDone = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.PlaySoundWhenQueueDone);
-
-            this.ShowAddAllToQueue = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowAddAllToQueue);
-            this.ShowAddSelectionToQueue = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.ShowAddSelectionToQueue);
 
             // #############################
             // Output Settings
@@ -1428,6 +1504,17 @@ namespace HandBrakeWPF.ViewModels
             // Title case
             this.ChangeToTitleCase = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.AutoNameTitleCase);
             this.RemovePunctuation = this.userSettingService.GetUserSetting<bool>(UserSettingConstants.RemovePunctuation);
+
+            // File Overwrite
+            this.FileOverwriteBehaviourList = new BindingList<FileOverwriteBehaviour>();
+            this.FileOverwriteBehaviourList.Add(FileOverwriteBehaviour.Ask);
+            this.FileOverwriteBehaviourList.Add(FileOverwriteBehaviour.ForceOverwrite);
+            this.SelectedOverwriteBehaviour = this.userSettingService.GetUserSetting<int>(UserSettingConstants.FileOverwriteBehaviour, typeof(int));
+
+            // Collision behaviour
+            this.AutonameFileCollisionBehaviours = new BindingList<AutonameFileCollisionBehaviour>() { AutonameFileCollisionBehaviour.AppendNumber, AutonameFileCollisionBehaviour.Prefix, AutonameFileCollisionBehaviour.Postfix };
+            this.SelectedCollisionBehaviour = this.userSettingService.GetUserSetting<int>(UserSettingConstants.AutonameFileCollisionBehaviour, typeof(int));
+            this.PrePostFilenameText = this.userSettingService.GetUserSetting<string>(UserSettingConstants.AutonameFilePrePostString);
 
             // #############################
             // Picture Tab
@@ -1553,22 +1640,27 @@ namespace HandBrakeWPF.ViewModels
             /* General */
             this.userSettingService.SetUserSetting(UserSettingConstants.UpdateStatus, this.CheckForUpdates);
             this.userSettingService.SetUserSetting(UserSettingConstants.DaysBetweenUpdateCheck, this.CheckForUpdatesFrequency);
-            this.userSettingService.SetUserSetting(UserSettingConstants.WhenCompleteAction, this.WhenDone);
             this.userSettingService.SetUserSetting(UserSettingConstants.SendFileTo, this.SendFileToPath);
             this.userSettingService.SetUserSetting(UserSettingConstants.SendFile, this.SendFileAfterEncode);
             this.userSettingService.SetUserSetting(UserSettingConstants.SendFileToArgs, this.Arguments);
-            this.userSettingService.SetUserSetting(UserSettingConstants.ResetWhenDoneAction, this.ResetWhenDoneAction);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowStatusInTitleBar, this.ShowStatusInTitleBar);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowPreviewOnSummaryTab, this.ShowPreviewOnSummaryTab);
-            this.userSettingService.SetUserSetting(UserSettingConstants.PlaySoundWhenDone, this.PlaySoundWhenDone);
-            this.userSettingService.SetUserSetting(UserSettingConstants.PlaySoundWhenQueueDone, this.PlaySoundWhenQueueDone);
-            this.userSettingService.SetUserSetting(UserSettingConstants.WhenDoneAudioFile, this.WhenDoneAudioFileFullPath);
+ 
             this.userSettingService.SetUserSetting(UserSettingConstants.UiLanguage, this.SelectedLanguage?.Culture);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowAddAllToQueue, this.ShowAddAllToQueue);
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowAddSelectionToQueue, this.ShowAddSelectionToQueue);
 
             /* Experiments */
             this.userSettingService.SetUserSetting(UserSettingConstants.ShowQueueInline, this.ShowQueueInline);
+
+            /* When Done */
+            this.userSettingService.SetUserSetting(UserSettingConstants.WhenCompleteAction, this.WhenDone);
+            this.userSettingService.SetUserSetting(UserSettingConstants.ResetWhenDoneAction, this.ResetWhenDoneAction);
+            this.userSettingService.SetUserSetting(UserSettingConstants.WhenDonePerformActionImmediately, this.WhenDonePerformActionImmediately);
+            this.userSettingService.SetUserSetting(UserSettingConstants.PlaySoundWhenDone, this.PlaySoundWhenDone);
+            this.userSettingService.SetUserSetting(UserSettingConstants.PlaySoundWhenQueueDone, this.PlaySoundWhenQueueDone);
+            this.userSettingService.SetUserSetting(UserSettingConstants.WhenDoneAudioFile, this.WhenDoneAudioFileFullPath);
+            
 
             /* Output Files */
             this.userSettingService.SetUserSetting(UserSettingConstants.AutoNaming, this.AutomaticallyNameFiles);
@@ -1578,6 +1670,9 @@ namespace HandBrakeWPF.ViewModels
             this.userSettingService.SetUserSetting(UserSettingConstants.AutoNameRemoveUnderscore, this.RemoveUnderscores);
             this.userSettingService.SetUserSetting(UserSettingConstants.AutoNameTitleCase, this.ChangeToTitleCase);
             this.userSettingService.SetUserSetting(UserSettingConstants.RemovePunctuation, this.RemovePunctuation);
+            this.userSettingService.SetUserSetting(UserSettingConstants.FileOverwriteBehaviour, this.SelectedOverwriteBehaviour);
+            this.userSettingService.SetUserSetting(UserSettingConstants.AutonameFileCollisionBehaviour, this.SelectedCollisionBehaviour);
+            this.userSettingService.SetUserSetting(UserSettingConstants.AutonameFilePrePostString, this.PrePostFilenameText);
 
             /* Previews */
             this.userSettingService.SetUserSetting(UserSettingConstants.VLCPath, this.VLCPath);
@@ -1692,6 +1787,11 @@ namespace HandBrakeWPF.ViewModels
         /// <returns>True if valid</returns>
         private bool IsValidAutonameFormat(string input, bool isSilent)
         {
+            if (string.IsNullOrEmpty(input))
+            {
+                return true;
+            }
+
             char[] invalidchars = Path.GetInvalidFileNameChars();
             Array.Sort(invalidchars);
             foreach (var characterToTest in input)

@@ -15,7 +15,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #include "qsv_common.h"
 #endif
 
@@ -114,7 +114,7 @@ int hb_picture_fill(uint8_t *data[], int stride[], hb_buffer_t *buf)
 {
     int ret, ii;
 
-    for (ii = 0; ii < 4; ii++)
+    for (ii = 0; ii <= buf->f.max_plane; ii++)
         stride[ii] = buf->plane[ii].stride;
 
     ret = av_image_fill_pointers(data, buf->f.fmt,
@@ -145,10 +145,12 @@ int hb_picture_crop(uint8_t *data[], int stride[], hb_buffer_t *buf,
               (left >> x_shift);
     data[2] = buf->plane[2].data + (top >> y_shift) * buf->plane[2].stride +
               (left >> x_shift);
+    data[3] = NULL;
 
     stride[0] = buf->plane[0].stride;
     stride[1] = buf->plane[1].stride;
     stride[2] = buf->plane[2].stride;
+    stride[3] = 0;
 
     return 0;
 }
@@ -414,7 +416,7 @@ void hb_scan( hb_handle_t * h, const char * path, int title_index,
     }
     hb_log(" - logical processor count: %d", hb_get_cpu_count());
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (!is_hardware_disabled())
     {
         /* Print QSV info here so that it's in all scan and encode logs */
@@ -470,7 +472,7 @@ int hb_save_preview( hb_handle_t * h, int title, int preview, hb_buffer_t *buf )
     }
 
     int pp, hh;
-    for( pp = 0; pp < 3; pp++ )
+    for( pp = 0; pp <= buf->f.max_plane; pp++ )
     {
         uint8_t *data = buf->plane[pp].data;
         int stride = buf->plane[pp].stride;
@@ -628,7 +630,7 @@ hb_image_t* hb_get_preview2(hb_handle_t * h, int title_idx, int picture,
                         geo->crop[0], geo->crop[2] );
     }
 
-    int colorspace = hb_ff_get_colorspace(title->color_matrix);
+    int colorspace = hb_sws_get_colorspace(title->color_matrix);
 
     // Get scaling context
     context = hb_sws_get_context(
@@ -703,7 +705,7 @@ int hb_detect_comb( hb_buffer_t * buf, int color_equal, int color_diff, int thre
     }
 
     /* One pas for Y, one pass for Cb, one pass for Cr */
-    for( k = 0; k < 3; k++ )
+    for( k = 0; k <= buf->f.max_plane; k++ )
     {
         uint8_t * data = buf->plane[k].data;
         int width = buf->plane[k].width;
@@ -1659,7 +1661,7 @@ int hb_global_init()
         return -1;
     }
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (!disable_hardware) 
     {
         result = hb_qsv_info_init();
@@ -1701,10 +1703,10 @@ int hb_global_init()
     hb_register(&hb_enctheora);
     hb_register(&hb_encvorbis);
     hb_register(&hb_encx264);
-#ifdef USE_X265
+#if HB_PROJECT_FEATURE_X265
     hb_register(&hb_encx265);
 #endif
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (!disable_hardware) 
     {
         hb_register(&hb_encqsv);

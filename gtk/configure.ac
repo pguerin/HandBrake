@@ -73,6 +73,10 @@ AC_ARG_ENABLE(x265,
 	AS_HELP_STRING([--enable-x265], [enable x265 encoder]),
 	use_x265=yes, use_x265=no)
 
+AC_ARG_ENABLE(numa,
+	AS_HELP_STRING([--enable-numa], [enable x265 NUMA support]),
+	use_numa=yes, use_numa=no)
+
 AC_ARG_ENABLE(qsv,
 	AS_HELP_STRING([--enable-qsv], [enable QSV encoder]),
 	use_qsv=yes, use_qsv=no)
@@ -181,6 +185,18 @@ GHB_CFLAGS="$HBINC $GHB_CFLAGS"
 
 HB_LIBS="-lhandbrake -lavformat -lavfilter -lavcodec -lavutil -lswresample -lpostproc -ldvdnav -ldvdread -lmp3lame -lvorbis -lvorbisenc -logg -lsamplerate -lx264 -lswscale -ltheoraenc -ltheoradec -lvpx -lz -lbz2 -lbluray -lass -lfontconfig -lfreetype -lxml2 -ljansson -lopus -lspeex -llzma"
 
+if test "x$use_fdk_aac" = "xyes" ; then
+    HB_LIBS="$HB_LIBS -lfdk-aac"
+fi
+
+if test "x$use_x265" = "xyes" ; then
+    HB_LIBS="$HB_LIBS -lx265"
+fi
+
+if test "x$use_qsv" = "xyes" ; then
+    HB_LIBS="$HB_LIBS -lmfx"
+fi
+
 case $host in
   *-*-mingw*)
     if test "x$use_libdl" = "xyes" ; then
@@ -196,6 +212,16 @@ case $host in
   *-*-freebsd*)
     HB_LIBS="$HB_LIBS -lpthread"
     ;;
+  *-*-linux*)
+    if test "x$use_qsv" = "xyes" ; then
+        HB_LIBS="$HB_LIBS -lva -lva-drm"
+    fi
+    if test "x$use_x265" = "xyes" ; then
+    if test "x$use_numa" = "xyes" ; then
+        HB_LIBS="$HB_LIBS -lnuma"
+    fi
+    fi
+    ;;
   *)
     HB_LIBS="$HB_LIBS -ldl -lpthread"
     ;;
@@ -203,17 +229,6 @@ esac
 
 AM_CONDITIONAL([GHB_FLATPAK], [test "$use_flatpak" = "yes"])
 
-if test "x$use_fdk_aac" = "xyes" ; then
-    HB_LIBS="$HB_LIBS -lfdk-aac"
-fi
-
-if test "x$use_x265" = "xyes" ; then
-    HB_LIBS="$HB_LIBS -lx265"
-fi
-
-if test "x$use_qsv" = "xyes" ; then
-    HB_LIBS="$HB_LIBS -lmfx -lva -lva-drm"
-fi
 if test "x$PYTHON" != "x" ; then
     HB_PYTHON="$PYTHON"
 else

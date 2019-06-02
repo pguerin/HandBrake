@@ -7,9 +7,13 @@
    For full terms see the file COPYING file or visit http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+#ifndef HB_INTERNAL_H
+#define HB_INTERNAL_H
+
+#include "project.h"
 #include "hbffmpeg.h"
 #include "extras/cl.h"
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 #include "qsv_libav.h"
 #endif
 
@@ -98,6 +102,7 @@ struct hb_buffer_settings_s
 #define HB_BUF_FLAG_EOS             0x0800
 #define HB_FLAG_FRAMETYPE_KEY       0x1000
 #define HB_FLAG_FRAMETYPE_REF       0x2000
+#define HB_FLAG_DISCARD             0x4000
     uint16_t      flags;
 
 #define HB_COMB_NONE  0
@@ -113,6 +118,11 @@ struct hb_image_format_s
     int           width;
     int           height;
     int           fmt;
+    int           color_prim;
+    int           color_transfer;
+    int           color_matrix;
+    int           color_range;
+    int           max_plane;
     int           window_width;
     int           window_height;
 };
@@ -137,10 +147,11 @@ struct hb_buffer_s
         int           size;
     } plane[4]; // 3 Color components + alpha
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     struct qsv
     {
         void           * qsv_atom;
+        AVFrame        * frame;
         void           * filter_details;
         hb_qsv_context * ctx;
     } qsv_details;
@@ -453,6 +464,7 @@ extern hb_filter_object_t hb_filter_vfr;
 extern hb_filter_object_t hb_filter_deblock;
 extern hb_filter_object_t hb_filter_denoise;
 extern hb_filter_object_t hb_filter_nlmeans;
+extern hb_filter_object_t hb_filter_chroma_smooth;
 extern hb_filter_object_t hb_filter_render_sub;
 extern hb_filter_object_t hb_filter_crop_scale;
 extern hb_filter_object_t hb_filter_rotate;
@@ -462,8 +474,9 @@ extern hb_filter_object_t hb_filter_lapsharp;
 extern hb_filter_object_t hb_filter_unsharp;
 extern hb_filter_object_t hb_filter_avfilter;
 extern hb_filter_object_t hb_filter_mt_frame;
+extern hb_filter_object_t hb_filter_colorspace;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
 extern hb_filter_object_t hb_filter_qsv;
 extern hb_filter_object_t hb_filter_qsv_pre;
 extern hb_filter_object_t hb_filter_qsv_post;
@@ -497,8 +510,6 @@ DECLARE_MUX( webm );
 DECLARE_MUX( avformat );
 
 void hb_deinterlace(hb_buffer_t *dst, hb_buffer_t *src);
-void hb_avfilter_combine( hb_list_t * list );
-char * hb_append_filter_string(char * graph_str, char * filter_str);
 
 struct hb_chapter_queue_item_s
 {
@@ -528,3 +539,4 @@ void                 hb_chapter_dequeue(hb_chapter_queue_t *q, hb_buffer_t *b);
 #define HB_FONT_SANS "sans-serif"
 #endif
 
+#endif // HB_INTERNAL_H

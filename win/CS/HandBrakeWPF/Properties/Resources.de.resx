@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -60,45 +60,45 @@
             : and then encoded with base64 encoding.
     -->
   <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
           <xsd:element name="metadata">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string"/>
-              <xsd:attribute name="type" type="xsd:string"/>
-              <xsd:attribute name="mimetype" type="xsd:string"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="assembly">
             <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string"/>
-              <xsd:attribute name="name" type="xsd:string"/>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -348,10 +348,6 @@ Voreinstellungen aus älteren Versionen müssen mit einer aktuellen Version neu 
   <data name="Video_EncoderExtraArgsTooltip" xml:space="preserve">
     <value>Zusätzliche erweiterte Argumente, die vom Videoenkoder angewendet werden.</value>
   </data>
-  <data name="Main_SourceDestinationMatchError" xml:space="preserve">
-    <value>Die Quelldatei die konvertiert werden soll kann nicht überschrieben werden.
-Bitte einen anderen Dateinamen wählen.</value>
-  </data>
   <data name="Subtitles_BurnInBehaviourModes" xml:space="preserve">
     <value>Keine - Es werden nur Spuren eingebrannt, bei denen der Container das Format nicht unterstützt.
 Fremdsprachenspur - Die Fremdsprachenspur wird eingebrannt, falls vorhanden. 
@@ -372,10 +368,11 @@ Beim Fortfahren werden nicht-eingebrannte Untertitel verlorengehen.</value>
     <value>Keine gültige Quelle oder Titel gefunden</value>
   </data>
   <data name="Main_ScanNoTitlesFoundMessage" xml:space="preserve">
-    <value>HandBrake kann die ausgewählte Quelle nicht enkodieren, da es keine gültige Quelle mit zu enkodierenden Titeln gefunden hat. 
+    <value>HandBrake kann die ausgewählte Quelle nicht kodieren, da es keine gültige Quelle mit zu kodierenden Titeln gefunden hat. 
 Dies kann auf einen der folgenden Gründe zurückzuführen sein: 
+- Die Dauer jedes Titels liegt unterhalb des Schwellenwertes "Minimale Titeldauer" in 'Einstellungen &gt; Erweitert''. 
 - Die Quelldatei ist keine gültige Videodatei oder befindet sich in einem Format, das HandBrake nicht unterstützt.
-- Die Quelle kann kopiergeschützt sein oder DRM enthalten.  HandBrake unterstützt nicht das Entfernen von Kopierschutzmaßnahmen. 
+- Die Quelle kann kopiergeschützt sein oder DRM enthalten. Bitte beachten Sie, dass HandBrake das Entfernen von Kopierschutzmaßnahmen nicht unterstützt. 
 
 Das Aktivitätsprotokoll kann weitere Informationen enthalten.</value>
   </data>
@@ -561,11 +558,6 @@ Bitte stellen Sie sicher, dass VLC installiert und der Pfad in den HandBrake-Ein
   </data>
   <data name="PresetService_ArchiveFile" xml:space="preserve">
     <value>Archivierte Datei:</value>
-  </data>
-  <data name="PresetService_PresetsOutOfDate" xml:space="preserve">
-    <value>HandBrake hat festgestellt, dass die Voreinstellungsdatei von einer älteren Version stammt.
-Es wird versucht die Datei trotzdem zu laden.
-Schlägt dies fehl, wird die Datei archiviert und eine neue erstellt.</value>
   </data>
   <data name="PresetService_UnableToLoad" xml:space="preserve">
     <value>Laden der Voreinstellung fehlgeschlagen.</value>
@@ -1219,12 +1211,6 @@ Soll sie überschrieben werden?</value>
   <data name="Options_Encoding" xml:space="preserve">
     <value>Enkodieren</value>
   </data>
-  <data name="Options_Experimental" xml:space="preserve">
-    <value>Experimentelle Funktionen</value>
-  </data>
-  <data name="Options_ExperimentalFeatures" xml:space="preserve">
-    <value>Experimentelle Funktionen sind Ideen an denen wir zur Zeit arbeiten. Dies kann es in eine finale Version schaffen, muss es aber nicht und es kann sein, dass es nicht korrekt funktioniert!</value>
-  </data>
   <data name="Options_Format" xml:space="preserve">
     <value>Dateiformat:</value>
   </data>
@@ -1304,7 +1290,7 @@ Soll sie überschrieben werden?</value>
     <value>Die neue experimentelle Darstellung der Warteschlange verwenden.</value>
   </data>
   <data name="Options_ShowQueueInline" xml:space="preserve">
-    <value>Warteschlange wie die Haupt-UI anzeigen.</value>
+    <value>Warteschlange wie die Haupt-UI anzeigen. (Experimentell)</value>
   </data>
   <data name="Options_TitleCase" xml:space="preserve">
     <value>Großbuchstaben korrigieren</value>
@@ -1429,16 +1415,16 @@ Dies beeinflusst nicht die momentanen Einstellungen im Untertitel-Tab. </value>
     <value>Audio:</value>
   </data>
   <data name="QueueView_ClearAll" xml:space="preserve">
-    <value>Alles löschen</value>
+    <value>Alle löschen</value>
   </data>
   <data name="QueueView_ClearCompleted" xml:space="preserve">
-    <value>Löschen abgeschlossen</value>
+    <value>fertige löschen</value>
   </data>
   <data name="QueueView_ClearQueue" xml:space="preserve">
     <value>Warteschlange löschen</value>
   </data>
   <data name="QueueView_ClearSelected" xml:space="preserve">
-    <value>Ausgewähltes löschen</value>
+    <value>ausgewählte löschen</value>
   </data>
   <data name="QueueView_Delete" xml:space="preserve">
     <value>Löschen</value>
@@ -1612,7 +1598,7 @@ Dies beeinflusst nicht die momentanen Einstellungen im Untertitel-Tab. </value>
     <value>Dauer:</value>
   </data>
   <data name="StaticPreviewView_LivePreview" xml:space="preserve">
-    <value>Livevorschau</value>
+    <value>Echtzeitvorschau</value>
   </data>
   <data name="StaticPreviewView_SelectPreviewImage" xml:space="preserve">
     <value>Ein Vorschaubild wählen</value>
@@ -1885,9 +1871,9 @@ Dies beeinflusst nicht die momentanen Einstellungen im Untertitel-Tab. </value>
     <value>Zeige 'Auswahl zur Warteschlange hinzufügen' in der Symbolleiste</value>
   </data>
   <data name="OptionsView_HardwareDetectFailed" xml:space="preserve">
-    <value>Die Unterstützung für die Hardwarekodierung wurde auf diesem System aufgrund eines Problems, das bei der Hardwareerkennung erkannt wurde, automatisch deaktiviert. Bitte stellen Sie sicher, dass aktuelle Treiber für alle Grafikkarten in diesem System verwendet werden.
+    <value>Die Unterstützung für Hardware-Encodierung ist momentan deaktiviert. Bitte stellen Sie sicher, dass alle Grafikkarten-Treiber auf dem aktuellen Stand sind.
 
-Dies hat keinen Einfluss auf die Software-Encoder. </value>
+Dies hat keinen Einfluss auf die Software-Encoder.</value>
   </data>
   <data name="Main_PleaseFixSubtitleSettings" xml:space="preserve">
     <value>Bitte die Untertiteleinstellungen vor den Fortfahren korrigieren.</value>
@@ -1903,5 +1889,74 @@ Dies hat keinen Einfluss auf die Software-Encoder. </value>
   </data>
   <data name="QueueView_Import" xml:space="preserve">
     <value>Importieren</value>
+  </data>
+  <data name="QueueViewModel_EncodeStatusChanged_StatusLabel" xml:space="preserve">
+    <value>Enkodierung: Durchgang {0} von {1},  {2:00.00}%, BpS: {3:000.0}, Mittlere BpS: {4:000.0}
+Verbleibende Zeit: {5}, vergangene Zeit: {6:d\:hh\:mm\:ss} {7}</value>
+  </data>
+  <data name="QueueView_DeleteSelected" xml:space="preserve">
+    <value>Ausgewähltes löschen</value>
+  </data>
+  <data name="Portable_TmpNotWritable" xml:space="preserve">
+    <value>Portable Modus: TMP-Verzeichnis erstellen nicht möglich. Bitte prüfen, dass der Pfad korrekt ist und Schreibrechte vorliegen.
+
+   {0}</value>
+  </data>
+  <data name="Portable_StorageNotWritable" xml:space="preserve">
+    <value>Portable Modus: Speicherverzeichnis erstellen nicht möglich. Bitte prüfen, dass der Pfad korrekt ist und Schreibrechte vorliegen.
+
+    {0}</value>
+  </data>
+  <data name="Portable_IniFileError" xml:space="preserve">
+    <value>Portable Modus: Das Lesen von portable.ini ist nicht möglich. Die Datei könnte fehlerhaft sein. Bitte erneut portable.ini.template als Vorlage benutzen.</value>
+  </data>
+  <data name="Startup_InitFailed" xml:space="preserve">
+    <value>Handbrakes Engine konnte nicht initialisiert werden. Dies wird oft durch veraltete GPU-Treiber verursacht.\n Bitte aktualisieren Sie die GPU-Treiber für alle Onboard- und diskreten Grafikkarten, die Ihr System besitzt.</value>
+  </data>
+  <data name="OptionsView_FormatOptions" xml:space="preserve">
+    <value>Echtzeit-Update Optionen: {source} {title} {chapters} 
+Nicht-Echtzeit Optionen: {date} {time} {creation-date} {creation-time} {quality} {bitrate} (Diese werden nur geändert, wenn eine neue Quelle gescannt, Titel oder Kapitel geändert werden)</value>
+  </data>
+  <data name="OptionsView_PathOptions" xml:space="preserve">
+    <value>Verfügbare Optionen: {source_path} oder {source_folder_name} (Nicht beide zur selben Zeit!)</value>
+  </data>
+  <data name="FileOverwriteBehaviours_Ask" xml:space="preserve">
+    <value>Fragen um Datei zu überschreiben</value>
+  </data>
+  <data name="FileOverwriteBehaviours_Autoname" xml:space="preserve">
+    <value>Versuchen Datei automatisch umzubenennen</value>
+  </data>
+  <data name="FileOverwriteBehaviours_Overwrite" xml:space="preserve">
+    <value>Die Datei überschreiben</value>
+  </data>
+  <data name="Options_UIBehaviour" xml:space="preserve">
+    <value>Verhalten der Benutzeroberfläche</value>
+  </data>
+  <data name="OptionsView_FileOverwriteBehaviour" xml:space="preserve">
+    <value>Verhalten bei Dateiüberschreibungen:</value>
+  </data>
+  <data name="Options_EncodeCompleted" xml:space="preserve">
+    <value>Enkodierung abgeschlossen</value>
+  </data>
+  <data name="Options_Notifications" xml:space="preserve">
+    <value>Benachrichtigungen</value>
+  </data>
+  <data name="Options_QueueCompleted" xml:space="preserve">
+    <value>Warteschlange ausgeführt</value>
+  </data>
+  <data name="Options_WhenDoneColon" xml:space="preserve">
+    <value>Wenn fertig:</value>
+  </data>
+  <data name="OptionsView_FileCollisionBehaviour" xml:space="preserve">
+    <value>Verhalten bei Dateinamenkonflikten:</value>
+  </data>
+  <data name="CollisionBehaviour_Post" xml:space="preserve">
+    <value>Postfix</value>
+  </data>
+  <data name="CollisionBehaviour_Pre" xml:space="preserve">
+    <value>Präfix</value>
+  </data>
+  <data name="CollisionBehaviour_AppendNumber" xml:space="preserve">
+    <value>Zahl anhängen</value>
   </data>
 </root>

@@ -33,7 +33,13 @@ const char* const* hb_av_preset_get_names(int encoder);
 uint64_t hb_ff_mixdown_xlat(int hb_mixdown, int *downmix_mode);
 void     hb_ff_set_sample_fmt(AVCodecContext *, AVCodec *, enum AVSampleFormat);
 
-int hb_ff_get_colorspace(int color_matrix);
+int hb_sws_get_colorspace(int color_matrix);
+int hb_colr_pri_hb_to_ff(int colr_prim);
+int hb_colr_tra_hb_to_ff(int colr_tra);
+int hb_colr_mat_hb_to_ff(int colr_mat);
+int hb_colr_pri_ff_to_hb(int colr_prim);
+int hb_colr_tra_ff_to_hb(int colr_tra);
+int hb_colr_mat_ff_to_hb(int colr_mat);
 
 struct SwsContext*
 hb_sws_get_context(int srcW, int srcH, enum AVPixelFormat srcFormat,
@@ -42,9 +48,12 @@ hb_sws_get_context(int srcW, int srcH, enum AVPixelFormat srcFormat,
 
 static const char* const hb_vce_preset_names[] = { "speed", "balanced", "quality", NULL, };
 
-hb_buffer_t * hb_avframe_to_video_buffer(AVFrame *frame, AVRational time_base);
-void hb_avframe_set_video_buffer_flags(hb_buffer_t * buf, AVFrame *frame,
-                                       AVRational time_base);
+void            hb_video_buffer_to_avframe(AVFrame *frame, hb_buffer_t * buf);
+hb_buffer_t   * hb_avframe_to_video_buffer(AVFrame *frame,
+                                           AVRational time_base);
+void            hb_avframe_set_video_buffer_flags(hb_buffer_t * buf,
+                                           AVFrame *frame,
+                                           AVRational time_base);
 
 int hb_av_encoder_present(int encoder);
 const char* const* hb_av_profile_get_names(int encoder);

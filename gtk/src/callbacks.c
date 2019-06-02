@@ -50,8 +50,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include <regex.h>
-
 #if !defined(_NO_UPDATE_CHECK)
 #if defined(_OLD_WEBKIT)
 #include <webkit.h>
@@ -88,6 +86,7 @@
 #include "hb-backend.h"
 #include "ghb-dvd.h"
 #include "ghbcellrenderertext.h"
+#include "libavutil/parseutils.h"
 
 static void update_queue_labels(signal_user_data_t *ud);
 static void load_all_titles(signal_user_data_t *ud, int titleindex);
@@ -1051,24 +1050,6 @@ check_name_template(signal_user_data_t *ud, const char *str)
     return FALSE;
 }
 
-static int
-match_by_pattern(const char *string, const char *pattern)
-{
-    int status;
-    regex_t re;
-    if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB) != 0)
-    {
-        return 0;
-    }
-    status = regexec(&re, string, (size_t) 0, NULL, 0);
-    regfree(&re);
-    if (status != 0)
-    {
-        return 0;
-    }
-    return 1;
-}
-
 typedef struct {
     const char *pattern;
     const char *format;
@@ -1083,9 +1064,9 @@ parse_datestring(const char *src, struct tm *tm)
 
     for (int i = 0; i < sizeof(maps); i++)
     {
-        if (match_by_pattern(src, maps[i].pattern))
+        if (hb_validate_param_string(maps[i].pattern, src))
         {
-            strptime(src, maps[i].format, tm);
+            av_small_strptime(src, maps[i].format, tm);
             return 1;
         }
     }
@@ -2491,7 +2472,6 @@ ghb_update_summary_info(signal_user_data_t *ud)
     gboolean     detel, comb_detect, deint, decomb, deblock, nlmeans, denoise;
     gboolean     unsharp, lapsharp, rot, gray;
     const char * sval;
-    int          ival;
 
     sval        = ghb_dict_get_string(ud->settings, "PictureDetelecine");
     detel       = sval != NULL && !!strcasecmp(sval, "off");
@@ -2500,8 +2480,8 @@ ghb_update_summary_info(signal_user_data_t *ud)
     sval        = ghb_dict_get_string(ud->settings, "PictureDeinterlaceFilter");
     deint       = sval != NULL && !strcasecmp(sval, "deinterlace");
     decomb      = sval != NULL && !strcasecmp(sval, "decomb");
-    ival        = ghb_dict_get_int(ud->settings, "PictureDeblock");
-    deblock     = ival >= 5;
+    sval        = ghb_dict_get_string(ud->settings, "PictureDeblockPreset");
+    deblock     = sval != NULL && !!strcasecmp(sval, "off");
     sval        = ghb_dict_get_string(ud->settings, "PictureDenoiseFilter");
     nlmeans     = sval != NULL && !strcasecmp(sval, "nlmeans");
     denoise     = sval != NULL && !strcasecmp(sval, "hqdn3d");
@@ -4609,7 +4589,7 @@ about_action_cb(GSimpleAction *action, GVariant *param, signal_user_data_t *ud)
     GtkWidget *widget = GHB_WIDGET (ud->builder, "hb_about");
     gchar *ver;
 
-    ver = g_strdup_printf("%s (%s)", HB_PROJECT_VERSION, HB_PROJECT_BUILD_ARCH);
+    ver = g_strdup_printf("%s (%s)", HB_PROJECT_VERSION, HB_PROJECT_HOST_ARCH);
     gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(widget), ver);
     g_free(ver);
     gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(widget),
@@ -5461,41 +5441,6 @@ format_deblock_cb(GtkScale *scale, gdouble val, signal_user_data_t *ud)
     else
     {
         return g_strdup_printf("%d", (gint)val);
-    }
-}
-
-G_MODULE_EXPORT gchar*
-format_vquality_cb(GtkScale *scale, gdouble val, signal_user_data_t *ud)
-{
-    gint vcodec;
-    const char *vqname;
-
-    vcodec = ghb_settings_video_encoder_codec(ud->settings, "VideoEncoder");
-    vqname = hb_video_quality_get_name(vcodec);
-    switch (vcodec)
-    {
-        case HB_VCODEC_FFMPEG_MPEG4:
-        case HB_VCODEC_FFMPEG_MPEG2:
-        case HB_VCODEC_FFMPEG_VP8:
-        case HB_VCODEC_FFMPEG_VP9:
-        case HB_VCODEC_THEORA:
-        {
-            return g_strdup_printf("%s: %d", vqname, (int)val);
-        } break;
-
-        case HB_VCODEC_X264_8BIT:
-        {
-            if (val == 0.0)
-            {
-                return g_strdup_printf(_("%s: %.4g (Warning: lossless)"),
-                                       vqname, val);
-            }
-        } // Falls through to default
-        case HB_VCODEC_X264_10BIT:
-        default:
-        {
-            return g_strdup_printf("%s: %.4g", vqname, val);
-        } break;
     }
 }
 

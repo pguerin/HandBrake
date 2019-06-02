@@ -37,6 +37,9 @@
 /* Class = "NSTextFieldCell"; title = "Description:"; ObjectID = "hc8-1h-Jye"; */
 "hc8-1h-Jye.title" = "Descrizione:";
 
+/* Class = "NSTextFieldCell"; title = "Audio:"; ObjectID = "HKp-K9-MF4"; */
+"HKp-K9-MF4.title" = "Audio:";
+
 /* Class = "NSTextFieldCell"; title = "Category:"; ObjectID = "IyE-Lz-32s"; */
 "IyE-Lz-32s.title" = "Categoria:";
 

@@ -36,7 +36,7 @@ namespace HandBrakeWPF.Services
     /// </summary>
     public class PrePostActionService : IPrePostActionService
     {
-        private readonly IQueueProcessor queueProcessor;
+        private readonly IQueueService queueProcessor;
         private readonly IUserSettingService userSettingService;
         private readonly IWindowManager windowManager;
         private readonly IScan scanService;
@@ -53,7 +53,7 @@ namespace HandBrakeWPF.Services
         /// <param name="windowManager">
         /// The window Manager.
         /// </param>
-        public PrePostActionService(IQueueProcessor queueProcessor, IUserSettingService userSettingService, IWindowManager windowManager, IScan scanService)
+        public PrePostActionService(IQueueService queueProcessor, IUserSettingService userSettingService, IWindowManager windowManager, IScan scanService)
         {
             this.queueProcessor = queueProcessor;
             this.userSettingService = userSettingService;
@@ -141,15 +141,20 @@ namespace HandBrakeWPF.Services
             }
 
             // Give the user the ability to cancel the shutdown. Default 60 second timer.
-            ICountdownAlertViewModel titleSpecificView = IoC.Get<ICountdownAlertViewModel>();
-            Execute.OnUIThread(
-                () =>
+            bool isCancelled = false;
+            if (!this.userSettingService.GetUserSetting<bool>(UserSettingConstants.WhenDonePerformActionImmediately))
+            {
+                ICountdownAlertViewModel titleSpecificView = IoC.Get<ICountdownAlertViewModel>();
+                Execute.OnUIThread(
+                    () =>
                     {
                         titleSpecificView.SetAction(this.userSettingService.GetUserSetting<string>(UserSettingConstants.WhenCompleteAction));
                         this.windowManager.ShowDialog(titleSpecificView);
+                        isCancelled = titleSpecificView.IsCancelled;
                     });
+            }
 
-            if (!titleSpecificView.IsCancelled)
+            if (!isCancelled)
             {               
                 // Do something when the encode ends.
                 switch (this.userSettingService.GetUserSetting<string>(UserSettingConstants.WhenCompleteAction))

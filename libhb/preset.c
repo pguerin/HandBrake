@@ -12,6 +12,10 @@
 #include "hb_dict.h"
 #include "plist.h"
 
+#if HB_PROJECT_FEATURE_QSV
+#include "qsv_common.h"
+#endif
+
 #if defined(SYS_LINUX)
 #define HB_PRESET_PLIST_FILE    "ghb/presets"
 #define HB_PRESET_JSON_FILE     "ghb/presets.json"
@@ -1389,6 +1393,41 @@ int hb_preset_apply_filters(const hb_dict_t *preset, hb_dict_t *job_dict)
         }
     }
 
+    // Chroma Smooth filter
+    const char *chroma_smooth_preset, *chroma_smooth_tune, *chroma_smooth_custom;
+    chroma_smooth_preset = hb_value_get_string(hb_dict_get(preset,
+                                                   "PictureChromaSmoothPreset"));
+    chroma_smooth_tune   = hb_value_get_string(hb_dict_get(preset,
+                                                   "PictureChromaSmoothTune"));
+    chroma_smooth_custom = hb_value_get_string(hb_dict_get(preset,
+                                                   "PictureChromaSmoothCustom"));
+    if (chroma_smooth_preset != NULL &&
+        strcasecmp(chroma_smooth_preset, "off"))
+    {
+        int filter_id = HB_FILTER_CHROMA_SMOOTH;
+        filter_settings = hb_generate_filter_settings(filter_id,
+                            chroma_smooth_preset, chroma_smooth_tune, chroma_smooth_custom);
+        if (filter_settings == NULL)
+        {
+            hb_error("Invalid chroma smooth filter settings (%s%s%s)",
+                     chroma_smooth_preset,
+                     chroma_smooth_tune ? "," : "",
+                     chroma_smooth_tune ? chroma_smooth_tune : "");
+            return -1;
+        }
+        else if (!hb_dict_get_bool(filter_settings, "disable"))
+        {
+            filter_dict = hb_dict_init();
+            hb_dict_set(filter_dict, "ID", hb_value_int(filter_id));
+            hb_dict_set(filter_dict, "Settings", filter_settings);
+            hb_add_filter2(filter_list, filter_dict);
+        }
+        else
+        {
+            hb_value_free(&filter_settings);
+        }
+    }
+
     // Sharpen filter
     const char *sharpen_filter, *sharpen_preset, *sharpen_tune, *sharpen_custom;
     sharpen_filter = hb_value_get_string(hb_dict_get(preset,
@@ -1440,14 +1479,16 @@ int hb_preset_apply_filters(const hb_dict_t *preset, hb_dict_t *job_dict)
     }
 
     // Deblock filter
-    char *deblock = hb_value_get_string_xform(
-                        hb_dict_get(preset, "PictureDeblock"));
+    const char * deblock = hb_value_get_string(
+                                hb_dict_get(preset, "PictureDeblockPreset"));
     if (deblock != NULL)
     {
+        const char * deblock_tune   = hb_value_get_string(
+                                hb_dict_get(preset, "PictureDeblockTune"));
         const char * deblock_custom = hb_value_get_string(
                                 hb_dict_get(preset, "PictureDeblockCustom"));
         filter_settings = hb_generate_filter_settings(HB_FILTER_DEBLOCK,
-                                              deblock, NULL, deblock_custom);
+                                    deblock, deblock_tune, deblock_custom);
         if (filter_settings == NULL)
         {
             hb_error("Invalid deblock filter settings (%s)", deblock);
@@ -1465,7 +1506,6 @@ int hb_preset_apply_filters(const hb_dict_t *preset, hb_dict_t *job_dict)
             hb_value_free(&filter_settings);
         }
     }
-    free(deblock);
 
     // Rotate filter
     char *rotate = hb_value_get_string_xform(
@@ -1565,8 +1605,16 @@ int hb_preset_apply_filters(const hb_dict_t *preset, hb_dict_t *job_dict)
     filter_dict = hb_dict_init();
     hb_dict_set(filter_dict, "ID", hb_value_int(HB_FILTER_VFR));
     hb_dict_set(filter_dict, "Settings", filter_settings);
-    hb_add_filter2(filter_list, filter_dict);
-
+#if HB_PROJECT_FEATURE_QSV
+    if(hb_qsv_preset_is_zero_copy_enabled(job_dict))
+    {
+        hb_log("HB_FILTER_VFR filter is disabled");
+    }
+    else
+#endif
+    {
+        hb_add_filter2(filter_list, filter_dict);
+    }
     return 0;
 }
 
@@ -1609,7 +1657,7 @@ int hb_preset_apply_video(const hb_dict_t *preset, hb_dict_t *job_dict)
     video_dict = hb_dict_get(job_dict, "Video");
     hb_dict_set(video_dict, "Encoder", hb_value_string(encoder->short_name));
 
-    color_matrix_code = hb_value_get_int(hb_dict_get(preset, "VideoColorMatrixCode"));
+    color_matrix_code = hb_value_get_int(hb_dict_get(preset, "VideoColorMatrixCodeOveride"));
     if (color_matrix_code != 0)
     {
         int color_prim, color_transfer, color_matrix;
@@ -1643,9 +1691,12 @@ int hb_preset_apply_video(const hb_dict_t *preset, hb_dict_t *job_dict)
                 break;
         }
 
-        hb_dict_set(video_dict, "ColorPrimaries", hb_value_int(color_prim));
-        hb_dict_set(video_dict, "ColorTransfer", hb_value_int(color_transfer));
-        hb_dict_set(video_dict, "ColorMatrix", hb_value_int(color_matrix));
+        hb_dict_set(video_dict, "ColorPrimariesOverride",
+                    hb_value_int(color_prim));
+        hb_dict_set(video_dict, "ColorTransferOverride",
+                    hb_value_int(color_transfer));
+        hb_dict_set(video_dict, "ColorMatrixOverride",
+                    hb_value_int(color_matrix));
     }
     hb_dict_set(video_dict, "Encoder", hb_value_dup(vcodec_value));
 
@@ -1724,7 +1775,12 @@ int hb_preset_apply_video(const hb_dict_t *preset, hb_dict_t *job_dict)
         hb_dict_set(qsv, "Decode",
                     hb_value_xform(value, HB_VALUE_TYPE_BOOL));
     }
-    if ((value = hb_dict_get(preset, "VideoQSVAsyncDepth")) != NULL)
+    if ((value = hb_dict_get(preset, "VideoQSVLowPower")) != NULL)
+    {
+        hb_dict_set(qsv, "LowPower",
+                    hb_value_xform(value, HB_VALUE_TYPE_BOOL));
+    }
+     if ((value = hb_dict_get(preset, "VideoQSVAsyncDepth")) != NULL)
     {
         hb_dict_set(qsv, "AsyncDepth",
                     hb_value_xform(value, HB_VALUE_TYPE_INT));
@@ -1933,8 +1989,16 @@ int hb_preset_apply_title(hb_handle_t *h, int title_index,
     filter_dict = hb_dict_init();
     hb_dict_set(filter_dict, "ID", hb_value_int(HB_FILTER_CROP_SCALE));
     hb_dict_set(filter_dict, "Settings", filter_settings);
-    hb_add_filter2(filter_list, filter_dict);
-
+#if HB_PROJECT_FEATURE_QSV
+    if(hb_qsv_preset_is_zero_copy_enabled(job_dict))
+    {
+        hb_log("HB_FILTER_CROP_SCALE filter is disabled");
+    }
+    else
+#endif
+    {
+        hb_add_filter2(filter_list, filter_dict);
+    }
     // Audio settings
     if (hb_preset_job_add_audio(h, title_index, preset, job_dict) != 0)
     {
@@ -2449,6 +2513,28 @@ static hb_value_t * import_hierarchy_29_0_0(hb_value_t *presets)
         presets = new_list;
     }
     return hb_value_dup(presets);
+}
+
+static void import_deblock_35_0_0(hb_value_t *preset)
+{
+    int deblock = hb_dict_get_int(preset, "PictureDeblock");
+
+    if (deblock < 5)
+    {
+        hb_dict_set_string(preset, "PictureDeblockPreset", "off");
+    }
+    else if (deblock < 7)
+    {
+        hb_dict_set_string(preset, "PictureDeblockPreset", "medium");
+    }
+    else
+    {
+        hb_dict_set_string(preset, "PictureDeblockPreset", "strong");
+    }
+    hb_dict_set_string(preset, "PictureDeblockTune", "medium");
+    hb_dict_set_string(preset, "PictureDeblockCustom",
+                       "strength=strong:thresh=20");
+    hb_dict_remove(preset, "PictureDeblock");
 }
 
 static void import_video_scaler_25_0_0(hb_value_t *preset)
@@ -3068,9 +3154,16 @@ static void import_video_0_0_0(hb_value_t *preset)
     }
 }
 
+static void import_35_0_0(hb_value_t *preset)
+{
+    import_deblock_35_0_0(preset);
+}
+
 static void import_25_0_0(hb_value_t *preset)
 {
     import_video_scaler_25_0_0(preset);
+
+    import_35_0_0(preset);
 }
 
 static void import_20_0_0(hb_value_t *preset)
@@ -3176,6 +3269,11 @@ static int preset_import(hb_value_t *preset, int major, int minor, int micro)
         else if (cmpVersion(major, minor, micro, 25, 0, 0) <= 0)
         {
             import_25_0_0(preset);
+            result = 1;
+        }
+        else if (cmpVersion(major, minor, micro, 35, 0, 0) <= 0)
+        {
+            import_35_0_0(preset);
             result = 1;
         }
         preset_clean(preset, hb_preset_template);

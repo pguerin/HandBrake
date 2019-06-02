@@ -4,6 +4,9 @@
 /* Class = "NSButton"; ibShadowedToolTip = "Save New Preset…"; ObjectID = "2vD-zN-YMe"; */
 "2vD-zN-YMe.ibShadowedToolTip" = "Salva nuovo preset…";
 
+/* Class = "CocoaBindingsConnection"; ibShadowedIsNilPlaceholder = " "; ObjectID = "3Gk-ma-r2w"; */
+"3Gk-ma-r2w.ibShadowedIsNilPlaceholder" = "9e9766bb4d6bb85574f2ef2fccf35391_tr";
+
 /* Class = "NSTextField"; ibShadowedToolTip = "Title to scan."; ObjectID = "3w9-Iu-3u2"; */
 "3w9-Iu-3u2.ibShadowedToolTip" = "Titolo da analizzare";
 
@@ -261,9 +264,6 @@
 
 /* Class = "NSTextFieldCell"; title = "To:"; ObjectID = "rfK-nQ-Aq2"; */
 "rfK-nQ-Aq2.title" = "In:";
-
-/* Class = "CocoaBindingsConnection"; ibShadowedIsNilPlaceholder = " "; ObjectID = "sbX-LU-uOW"; */
-"sbX-LU-uOW.ibShadowedIsNilPlaceholder" = "bae99e1761724952e7893d509131ea79_tr";
 
 /* Class = "NSToolbarItem"; label = "Pause"; ObjectID = "wTQ-KF-5KW"; */
 "wTQ-KF-5KW.label" = "Pausa";

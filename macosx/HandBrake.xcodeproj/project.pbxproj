@@ -52,9 +52,7 @@
 		273F20B514ADBE670021BE6D /* HBPreferencesController.m in Sources */ = {isa = PBXBuildFile; fileRef = 273F20A014ADBE670021BE6D /* HBPreferencesController.m */; };
 		273F20B714ADBE670021BE6D /* HBPreviewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 273F20A414ADBE670021BE6D /* HBPreviewController.m */; };
 		273F20BA14ADBE670021BE6D /* HBPictureController.m in Sources */ = {isa = PBXBuildFile; fileRef = 273F20AA14ADBE670021BE6D /* HBPictureController.m */; };
-		273F20CC14ADC8A10021BE6D /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 273F20C014ADC1250021BE6D /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		273F218B14ADDDA10021BE6D /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 273F217C14ADDDA10021BE6D /* InfoPlist.strings */; };
-		273F21C214ADE7BC0021BE6D /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 273F20C014ADC1250021BE6D /* Sparkle.framework */; };
 		27D6C72614B1019100B785E4 /* libhandbrake.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D6C72414B1019100B785E4 /* libhandbrake.a */; };
 		27D6C74414B102DA00B785E4 /* libass.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D6C72814B102DA00B785E4 /* libass.a */; };
 		27D6C74614B102DA00B785E4 /* libavcodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 27D6C72914B102DA00B785E4 /* libavcodec.a */; };
@@ -189,6 +187,12 @@
 		A9294CC91DC4BBF7004D3415 /* HBJob+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A9294CC71DC4BBF7004D3415 /* HBJob+Private.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		A92B148220CA9F7700146FD8 /* HBHUDView.m in Sources */ = {isa = PBXBuildFile; fileRef = A92B148120CA9F7600146FD8 /* HBHUDView.m */; };
 		A937EECB1C6C7C0300EEAE6D /* dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = A937EECA1C6C7C0300EEAE6D /* dsa_pub.pem */; };
+		A939854F22315575001DCAEB /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A939854D2231556D001DCAEB /* Sparkle.framework */; };
+		A939855022315592001DCAEB /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A939854D2231556D001DCAEB /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A939855622315638001DCAEB /* org.sparkle-project.InstallerConnection.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = A939855222315628001DCAEB /* org.sparkle-project.InstallerConnection.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A939855722315638001DCAEB /* org.sparkle-project.InstallerLauncher.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = A939855322315628001DCAEB /* org.sparkle-project.InstallerLauncher.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A939855822315638001DCAEB /* org.sparkle-project.InstallerStatus.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = A939855422315628001DCAEB /* org.sparkle-project.InstallerStatus.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A939855A22315993001DCAEB /* org.sparkle-project.Downloader.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = A939855922315987001DCAEB /* org.sparkle-project.Downloader.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A939DD8B1FC8826A00135F2A /* HBPresetsMenuBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = A939DD8A1FC8826A00135F2A /* HBPresetsMenuBuilder.m */; };
 		A93B49221DA3AA6900DD70A3 /* HBToolbarBadgedItem.m in Sources */ = {isa = PBXBuildFile; fileRef = A93B49211DA3AA6900DD70A3 /* HBToolbarBadgedItem.m */; };
 		A93E0ED31972957000FD67FB /* HBVideoController.m in Sources */ = {isa = PBXBuildFile; fileRef = A93E0ED11972957000FD67FB /* HBVideoController.m */; };
@@ -337,8 +341,21 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				273F20CC14ADC8A10021BE6D /* Sparkle.framework in CopyFiles */,
 				A9736F181C7DA5FE008F1D18 /* HandBrakeKit.framework in CopyFiles */,
+				A939855022315592001DCAEB /* Sparkle.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A939855522315630001DCAEB /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolderSpec = 16;
+			files = (
+				A939855622315638001DCAEB /* org.sparkle-project.InstallerConnection.xpc in CopyFiles */,
+				A939855722315638001DCAEB /* org.sparkle-project.InstallerLauncher.xpc in CopyFiles */,
+				A939855822315638001DCAEB /* org.sparkle-project.InstallerStatus.xpc in CopyFiles */,
+				A939855A22315993001DCAEB /* org.sparkle-project.Downloader.xpc in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,7 +409,6 @@
 		273F20A914ADBE670021BE6D /* HBPictureController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBPictureController.h; sourceTree = "<group>"; };
 		273F20AA14ADBE670021BE6D /* HBPictureController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HBPictureController.m; sourceTree = "<group>"; };
 		273F20BD14ADC09F0021BE6D /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
-		273F20C014ADC1250021BE6D /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		275916DA14B2AB27007211E9 /* native.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = native.xcconfig; sourceTree = "<group>"; };
 		277EFE8D17ED5628001D4A6A /* supplemental.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = supplemental.xcconfig; sourceTree = "<group>"; };
 		277EFE9217ED799E001D4A6A /* libfdk-aac.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libfdk-aac.a"; path = "external/contrib/lib/libfdk-aac.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -421,6 +437,36 @@
 		A900E6BC1D7B1B4800CB6C0A /* libopus.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopus.a; path = external/contrib/lib/libopus.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		A903C55E1CCE78060026B0ED /* NSWindow+HBAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+HBAdditions.h"; sourceTree = "<group>"; };
 		A903C55F1CCE78060026B0ED /* NSWindow+HBAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSWindow+HBAdditions.m"; sourceTree = "<group>"; };
+		A90713BC2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A90713BD2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A90713C12242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBEncodingProgressHUDController.strings; sourceTree = "<group>"; };
+		A90713C22242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBTitleSelection.strings; sourceTree = "<group>"; };
+		A90713C32242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Presets.strings; sourceTree = "<group>"; };
+		A90713C42242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AddPreset.strings; sourceTree = "<group>"; };
+		A90713C52242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBPreviewViewController.strings; sourceTree = "<group>"; };
+		A90713C62242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/ExceptionAlert.strings; sourceTree = "<group>"; };
+		A90713C72242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/MainMenu.strings; sourceTree = "<group>"; };
+		A90713C82242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Subtitles.strings; sourceTree = "<group>"; };
+		A90713C92242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Video.strings; sourceTree = "<group>"; };
+		A90713CA2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/PictureSettings.strings; sourceTree = "<group>"; };
+		A90713CB2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBFiltersViewController.strings; sourceTree = "<group>"; };
+		A90713CC2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/MainWindow.strings; sourceTree = "<group>"; };
+		A90713CD2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Preferences.strings; sourceTree = "<group>"; };
+		A90713CE2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBPictureHUDController.strings; sourceTree = "<group>"; };
+		A90713CF2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Audio.strings; sourceTree = "<group>"; };
+		A90713D02242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBRenamePresetController.strings; sourceTree = "<group>"; };
+		A90713D12242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/OutputPanel.strings; sourceTree = "<group>"; };
+		A90713D22242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBAddCategoryController.strings; sourceTree = "<group>"; };
+		A90713D32242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBSummaryViewController.strings; sourceTree = "<group>"; };
+		A90713D42242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/PicturePreview.strings; sourceTree = "<group>"; };
+		A90713D52242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/SubtitlesDefaults.strings; sourceTree = "<group>"; };
+		A90713D62242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Queue.strings; sourceTree = "<group>"; };
+		A90713D72242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AudioDefaults.strings; sourceTree = "<group>"; };
+		A90713D82242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBPictureViewController.strings; sourceTree = "<group>"; };
+		A90713D92242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/HBPlayerHUDController.strings; sourceTree = "<group>"; };
+		A90713DA2242693B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/ChaptersTitles.strings; sourceTree = "<group>"; };
+		A90713DB2242697B00372AA0 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A90713DF22426AD100372AA0 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/ExceptionAlert.strings; sourceTree = "<group>"; };
 		A90A0CAD1988D57200DA65CE /* HBAudioTrackPreset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBAudioTrackPreset.h; sourceTree = "<group>"; };
 		A90A0CAE1988D57200DA65CE /* HBAudioTrackPreset.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HBAudioTrackPreset.m; sourceTree = "<group>"; };
 		A91017B21A64440A00039BFB /* HBSubtitles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBSubtitles.h; sourceTree = "<group>"; };
@@ -461,6 +507,11 @@
 		A932E271198834130047D13E /* HBAudioDefaults.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HBAudioDefaults.h; sourceTree = "<group>"; };
 		A932E272198834130047D13E /* HBAudioDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HBAudioDefaults.m; sourceTree = "<group>"; };
 		A937EECA1C6C7C0300EEAE6D /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dsa_pub.pem; sourceTree = "<group>"; };
+		A939854D2231556D001DCAEB /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = Sparkle/Sparkle.framework; sourceTree = "<group>"; };
+		A939855222315628001DCAEB /* org.sparkle-project.InstallerConnection.xpc */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.xpc-service"; name = "org.sparkle-project.InstallerConnection.xpc"; path = "Sparkle/org.sparkle-project.InstallerConnection.xpc"; sourceTree = SOURCE_ROOT; };
+		A939855322315628001DCAEB /* org.sparkle-project.InstallerLauncher.xpc */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.xpc-service"; name = "org.sparkle-project.InstallerLauncher.xpc"; path = "Sparkle/org.sparkle-project.InstallerLauncher.xpc"; sourceTree = SOURCE_ROOT; };
+		A939855422315628001DCAEB /* org.sparkle-project.InstallerStatus.xpc */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.xpc-service"; name = "org.sparkle-project.InstallerStatus.xpc"; path = "Sparkle/org.sparkle-project.InstallerStatus.xpc"; sourceTree = SOURCE_ROOT; };
+		A939855922315987001DCAEB /* org.sparkle-project.Downloader.xpc */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.xpc-service"; name = "org.sparkle-project.Downloader.xpc"; path = "Sparkle/org.sparkle-project.Downloader.xpc"; sourceTree = SOURCE_ROOT; };
 		A939DD891FC8826A00135F2A /* HBPresetsMenuBuilder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HBPresetsMenuBuilder.h; sourceTree = "<group>"; };
 		A939DD8A1FC8826A00135F2A /* HBPresetsMenuBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HBPresetsMenuBuilder.m; sourceTree = "<group>"; };
 		A93B0DF61C804CF50051A3FA /* NSDictionary+HBAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDictionary+HBAdditions.h"; sourceTree = "<group>"; };
@@ -741,8 +792,8 @@
 			files = (
 				273F203C14ADBC210021BE6D /* Cocoa.framework in Frameworks */,
 				A9E1467B16BC2ABD00C307BC /* QuartzCore.framework in Frameworks */,
-				273F21C214ADE7BC0021BE6D /* Sparkle.framework in Frameworks */,
 				A9736F171C7DA5FE008F1D18 /* HandBrakeKit.framework in Frameworks */,
+				A939854F22315575001DCAEB /* Sparkle.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -858,6 +909,7 @@
 				27D6C72314B1013400B785E4 /* Products (external) */,
 				273F20CD14ADC8E60021BE6D /* Resources */,
 				273F203414ADBAC30021BE6D /* Frameworks */,
+				A9398551223155EF001DCAEB /* XPCService */,
 				277A3FCF14AE848400A835E4 /* xcconfig */,
 			);
 			sourceTree = "<group>";
@@ -950,7 +1002,7 @@
 		273F20CE14ADC9210021BE6D /* Bundled */ = {
 			isa = PBXGroup;
 			children = (
-				273F20C014ADC1250021BE6D /* Sparkle.framework */,
+				A939854D2231556D001DCAEB /* Sparkle.framework */,
 			);
 			name = Bundled;
 			sourceTree = "<group>";
@@ -1115,6 +1167,17 @@
 				A9A96BC620CAD61000A39AFB /* AudioDefaults.xib */,
 			);
 			name = "Audio Defaults";
+			sourceTree = "<group>";
+		};
+		A9398551223155EF001DCAEB /* XPCService */ = {
+			isa = PBXGroup;
+			children = (
+				A939855922315987001DCAEB /* org.sparkle-project.Downloader.xpc */,
+				A939855222315628001DCAEB /* org.sparkle-project.InstallerConnection.xpc */,
+				A939855322315628001DCAEB /* org.sparkle-project.InstallerLauncher.xpc */,
+				A939855422315628001DCAEB /* org.sparkle-project.InstallerStatus.xpc */,
+			);
+			path = XPCService;
 			sourceTree = "<group>";
 		};
 		A93E6F2E1CD774960096C0DE /* Player */ = {
@@ -1461,6 +1524,7 @@
 				273F203614ADBC200021BE6D /* Frameworks */,
 				273F203714ADBC200021BE6D /* Resources */,
 				273F20CA14ADC86C0021BE6D /* CopyFiles */,
+				A939855522315630001DCAEB /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -1523,6 +1587,9 @@
 							com.apple.ApplicationGroups.Mac = {
 								enabled = 0;
 							};
+							com.apple.HardenedRuntime = {
+								enabled = 0;
+							};
 							com.apple.Push = {
 								enabled = 0;
 							};
@@ -1553,6 +1620,7 @@
 				Base,
 				de,
 				it,
+				fr,
 			);
 			mainGroup = 273F1FDE14AD9DA40021BE6D;
 			productRefGroup = 273F200014ADAE950021BE6D /* Products */;
@@ -1819,6 +1887,7 @@
 				A9A96B8D20CAD2EE00A39AFB /* Base */,
 				A9637D9F20F7A252001EAE7C /* de */,
 				A9F5E3442215D85A0046FA4B /* it */,
+				A90713D02242693B00372AA0 /* fr */,
 			);
 			name = HBRenamePresetController.xib;
 			sourceTree = "<group>";
@@ -1837,6 +1906,7 @@
 				A953FF3820CAD29300325A51 /* Base */,
 				A9637DA220F7A252001EAE7C /* de */,
 				A9F5E3472215D85A0046FA4B /* it */,
+				A90713D32242693B00372AA0 /* fr */,
 			);
 			name = HBSummaryViewController.xib;
 			sourceTree = "<group>";
@@ -1847,6 +1917,7 @@
 				A9A96B8C20CAD2E700A39AFB /* Base */,
 				A9637DA120F7A252001EAE7C /* de */,
 				A9F5E3462215D85A0046FA4B /* it */,
+				A90713D22242693B00372AA0 /* fr */,
 			);
 			name = HBAddCategoryController.xib;
 			sourceTree = "<group>";
@@ -1857,6 +1928,7 @@
 				A9A96B8B20CAD2DB00A39AFB /* Base */,
 				A9637D9420F7A252001EAE7C /* de */,
 				A9F5E3382215D85A0046FA4B /* it */,
+				A90713C42242693B00372AA0 /* fr */,
 			);
 			name = AddPreset.xib;
 			sourceTree = "<group>";
@@ -1867,6 +1939,7 @@
 				A94DC2DD20CADA2C00EAC8FD /* Base */,
 				A9637D9B20F7A252001EAE7C /* de */,
 				A9F5E3412215D85A0046FA4B /* it */,
+				A90713CC2242693B00372AA0 /* fr */,
 			);
 			name = MainWindow.xib;
 			sourceTree = "<group>";
@@ -1876,6 +1949,7 @@
 			children = (
 				A975B02120F7AF29004675CC /* de */,
 				A958605B2216A5E5002092B1 /* it */,
+				A90713DB2242697B00372AA0 /* fr */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1886,6 +1960,7 @@
 				A9A96B8320CAD2C200A39AFB /* Base */,
 				A9637D9D20F7A252001EAE7C /* de */,
 				A9F5E3422215D85A0046FA4B /* it */,
+				A90713CE2242693B00372AA0 /* fr */,
 			);
 			name = HBPictureHUDController.xib;
 			sourceTree = "<group>";
@@ -1896,6 +1971,7 @@
 				A9A96B8620CAD2CC00A39AFB /* Base */,
 				A9637D9120F7A252001EAE7C /* de */,
 				A9F5E3352215D85A0046FA4B /* it */,
+				A90713C12242693B00372AA0 /* fr */,
 			);
 			name = HBEncodingProgressHUDController.xib;
 			sourceTree = "<group>";
@@ -1906,6 +1982,7 @@
 				A9A96B8920CAD2D100A39AFB /* Base */,
 				A9637DA920F7A252001EAE7C /* de */,
 				A9F5E34D2215D85A0046FA4B /* it */,
+				A90713D92242693B00372AA0 /* fr */,
 			);
 			name = HBPlayerHUDController.xib;
 			sourceTree = "<group>";
@@ -1916,6 +1993,7 @@
 				A9A96BAC20CAD5A100A39AFB /* Base */,
 				A9637D9620F7A252001EAE7C /* de */,
 				A9F5E33B2215D85A0046FA4B /* it */,
+				A90713C72242693B00372AA0 /* fr */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";
@@ -1926,6 +2004,7 @@
 				A9A96BAF20CAD5BD00A39AFB /* Base */,
 				A9637D9320F7A252001EAE7C /* de */,
 				A9F5E3372215D85A0046FA4B /* it */,
+				A90713C32242693B00372AA0 /* fr */,
 			);
 			name = Presets.xib;
 			sourceTree = "<group>";
@@ -1936,6 +2015,7 @@
 				A9A96BB520CAD5D600A39AFB /* Base */,
 				A9637D9220F7A252001EAE7C /* de */,
 				A9F5E3362215D85A0046FA4B /* it */,
+				A90713C22242693B00372AA0 /* fr */,
 			);
 			name = HBTitleSelection.xib;
 			sourceTree = "<group>";
@@ -1946,6 +2026,7 @@
 				A9A96BB820CAD5ED00A39AFB /* Base */,
 				A9637DA820F7A252001EAE7C /* de */,
 				A9F5E34C2215D85A0046FA4B /* it */,
+				A90713D82242693B00372AA0 /* fr */,
 			);
 			name = HBPictureViewController.xib;
 			sourceTree = "<group>";
@@ -1956,6 +2037,7 @@
 				A9A96BBB20CAD5F300A39AFB /* Base */,
 				A9637D9A20F7A252001EAE7C /* de */,
 				A9F5E33F2215D85A0046FA4B /* it */,
+				A90713CB2242693B00372AA0 /* fr */,
 			);
 			name = HBFiltersViewController.xib;
 			sourceTree = "<group>";
@@ -1966,6 +2048,7 @@
 				A9A96BBE20CAD5F700A39AFB /* Base */,
 				A9637D9820F7A252001EAE7C /* de */,
 				A9F5E33D2215D85A0046FA4B /* it */,
+				A90713C92242693B00372AA0 /* fr */,
 			);
 			name = Video.xib;
 			sourceTree = "<group>";
@@ -1976,6 +2059,7 @@
 				A9A96BC420CAD60900A39AFB /* Base */,
 				A9637D9E20F7A252001EAE7C /* de */,
 				A9F5E3432215D85A0046FA4B /* it */,
+				A90713CF2242693B00372AA0 /* fr */,
 			);
 			name = Audio.xib;
 			sourceTree = "<group>";
@@ -1986,6 +2070,7 @@
 				A9A96BC720CAD61000A39AFB /* Base */,
 				A9637DA620F7A252001EAE7C /* de */,
 				A9F5E34A2215D85A0046FA4B /* it */,
+				A90713D72242693B00372AA0 /* fr */,
 			);
 			name = AudioDefaults.xib;
 			sourceTree = "<group>";
@@ -1996,6 +2081,7 @@
 				A9A96BCA20CAD61800A39AFB /* Base */,
 				A9637D9720F7A252001EAE7C /* de */,
 				A9F5E33C2215D85A0046FA4B /* it */,
+				A90713C82242693B00372AA0 /* fr */,
 			);
 			name = Subtitles.xib;
 			sourceTree = "<group>";
@@ -2006,6 +2092,7 @@
 				A9A96BCD20CAD61F00A39AFB /* Base */,
 				A9637DA420F7A252001EAE7C /* de */,
 				A9F5E3492215D85A0046FA4B /* it */,
+				A90713D52242693B00372AA0 /* fr */,
 			);
 			name = SubtitlesDefaults.xib;
 			sourceTree = "<group>";
@@ -2016,6 +2103,7 @@
 				A9A96BD020CAD62500A39AFB /* Base */,
 				A9637DAA20F7A252001EAE7C /* de */,
 				A9F5E34E2215D85A0046FA4B /* it */,
+				A90713DA2242693B00372AA0 /* fr */,
 			);
 			name = ChaptersTitles.xib;
 			sourceTree = "<group>";
@@ -2026,6 +2114,7 @@
 				A9A96BD320CAD63000A39AFB /* Base */,
 				A9637DA720F7A252001EAE7C /* de */,
 				A9F5E34B2215D85A0046FA4B /* it */,
+				A90713D62242693B00372AA0 /* fr */,
 			);
 			name = Queue.xib;
 			sourceTree = "<group>";
@@ -2036,6 +2125,7 @@
 				A9A96BD620CAD64200A39AFB /* Base */,
 				A9637D9920F7A252001EAE7C /* de */,
 				A9F5E33E2215D85A0046FA4B /* it */,
+				A90713CA2242693B00372AA0 /* fr */,
 			);
 			name = PictureSettings.xib;
 			sourceTree = "<group>";
@@ -2046,6 +2136,7 @@
 				A9A96BD920CAD64B00A39AFB /* Base */,
 				A9637DA320F7A252001EAE7C /* de */,
 				A9F5E3482215D85A0046FA4B /* it */,
+				A90713D42242693B00372AA0 /* fr */,
 			);
 			name = PicturePreview.xib;
 			sourceTree = "<group>";
@@ -2056,6 +2147,7 @@
 				A9A96BDC20CAD66000A39AFB /* Base */,
 				A9637DA020F7A252001EAE7C /* de */,
 				A9F5E3452215D85A0046FA4B /* it */,
+				A90713D12242693B00372AA0 /* fr */,
 			);
 			name = OutputPanel.xib;
 			sourceTree = "<group>";
@@ -2066,6 +2158,7 @@
 				A9A96BDF20CAD66500A39AFB /* Base */,
 				A9637D9C20F7A252001EAE7C /* de */,
 				A9F5E3402215D85A0046FA4B /* it */,
+				A90713CD2242693B00372AA0 /* fr */,
 			);
 			name = Preferences.xib;
 			sourceTree = "<group>";
@@ -2076,6 +2169,7 @@
 				A9A96BE220CAD6CD00A39AFB /* Base */,
 				A9637D9520F7A252001EAE7C /* de */,
 				A9F5E3392215D85A0046FA4B /* it */,
+				A90713C52242693B00372AA0 /* fr */,
 			);
 			name = HBPreviewViewController.xib;
 			sourceTree = "<group>";
@@ -2086,6 +2180,7 @@
 				A9B6B9F0217B408E00B957AE /* de */,
 				A95CB2FB217B6D07001E9F51 /* en */,
 				A9F5E3302215D85A0046FA4B /* it */,
+				A90713BC2242693B00372AA0 /* fr */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -2095,6 +2190,7 @@
 			children = (
 				A9B6B9F3217B408E00B957AE /* de */,
 				A9F5E3342215D85A0046FA4B /* it */,
+				A90713BD2242693B00372AA0 /* fr */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -2104,6 +2200,8 @@
 			children = (
 				A9E52CD7218DD52A00E17B86 /* Base */,
 				A9F5E33A2215D85A0046FA4B /* it */,
+				A90713C62242693B00372AA0 /* fr */,
+				A90713DF22426AD100372AA0 /* de */,
 			);
 			name = ExceptionAlert.xib;
 			sourceTree = "<group>";
@@ -2314,10 +2412,12 @@
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_RAND = YES;
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					"$(PROJECT_DIR)/Sparkle",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
@@ -2343,10 +2443,12 @@
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_RAND = YES;
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_ENTITLEMENTS = "";
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					"$(PROJECT_DIR)/Sparkle",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
@@ -2873,7 +2975,8 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					"$(PROJECT_DIR)/Sparkle",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
@@ -2922,7 +3025,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_IDENTITY = "";
-				COPY_PHASE_STRIP = YES;
+				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				EXTERNAL_BUILD = "$(CONFIGURATION_BUILD_DIR)/external";
@@ -3112,7 +3215,8 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)\"",
+					"$(SRCROOT)",
+					"$(PROJECT_DIR)/Sparkle",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (

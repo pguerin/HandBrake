@@ -40,14 +40,18 @@
 
 #include "hb.h"
 #include "hbffmpeg.h"
+#include "hbavfilter.h"
 #include "libavfilter/avfilter.h"
 #include "libavfilter/buffersrc.h"
 #include "libavfilter/buffersink.h"
+#include "libavutil/hwcontext.h"
 #include "lang.h"
 #include "audio_resample.h"
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
+#include "libavutil/hwcontext_qsv.h"
 #include "qsv_common.h"
+#include "qsv_libav.h"
 #endif
 
 static void compute_frame_duration( hb_work_private_t *pv );
@@ -81,6 +85,7 @@ typedef struct
     int                    frametype;
     int                    scr_sequence;
     int                    new_chap;
+    int                    discard;
 } packet_info_t;
 
 typedef struct reordered_data_s reordered_data_t;
@@ -98,14 +103,11 @@ struct reordered_data_s
 
 struct video_filters_s
 {
-    AVFilterGraph   * graph;
-    AVFilterContext * last;
-    AVFilterContext * input;
-    AVFilterContext * output;
+    hb_avfilter_graph_t * graph;
 
-    int               width;
-    int               height;
-    int               pix_fmt;
+    int                   width;
+    int                   height;
+    int                   pix_fmt;
 };
 
 struct hb_work_private_s
@@ -141,7 +143,7 @@ struct hb_work_private_s
     hb_audio_resample_t  * resample;
     int                    drop_samples;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     // QSV-specific settings
     struct
     {
@@ -339,21 +341,7 @@ static int decavcodecaInit( hb_work_object_t * w, hb_job_t * job )
  **********************************************************************/
 static void close_video_filters(hb_work_private_t *pv)
 {
-    if (pv->video_filters.input != NULL)
-    {
-        avfilter_free(pv->video_filters.input);
-        pv->video_filters.input = NULL;
-    }
-    if (pv->video_filters.output != NULL)
-    {
-        avfilter_free(pv->video_filters.output);
-        pv->video_filters.output = NULL;
-    }
-    if (pv->video_filters.graph != NULL)
-    {
-        avfilter_graph_free(&pv->video_filters.graph);
-    }
-    pv->video_filters.last = NULL;
+    hb_avfilter_graph_close(&pv->video_filters.graph);
 }
 
 static void closePrivData( hb_work_private_t ** ppv )
@@ -377,7 +365,7 @@ static void closePrivData( hb_work_private_t ** ppv )
         }
         if ( pv->context && pv->context->codec )
         {
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
             /*
              * FIXME: knowingly leaked.
              *
@@ -392,6 +380,7 @@ static void closePrivData( hb_work_private_t ** ppv )
              * form of communication between the two libmfx sessions).
              */
             //if (!(pv->qsv.decode && pv->job != NULL && (pv->job->vcodec & HB_VCODEC_QSV_MASK)))
+            hb_qsv_uninit_dec(pv->context);
 #endif
             {
                 hb_avcodec_free_context(&pv->context);
@@ -505,6 +494,7 @@ static int decavcodecaWork( hb_work_object_t * w, hb_buffer_t ** buf_in,
         pv->packet_info.scr_sequence = in->s.scr_sequence;
         pv->packet_info.new_chap     = in->s.new_chap;
         pv->packet_info.frametype    = in->s.frametype;
+        pv->packet_info.discard      = !!(in->s.flags & HB_FLAG_DISCARD);
     }
     for (pos = 0; pos < in->size; pos += len)
     {
@@ -538,6 +528,7 @@ static int decavcodecaWork( hb_work_object_t * w, hb_buffer_t ** buf_in,
             // decodeAudio that is now finished.  The next packet is associated
             // with the input buffer, so set it's chapter and scr info.
             pv->packet_info.scr_sequence = in->s.scr_sequence;
+            pv->packet_info.discard      = !!(in->s.flags & HB_FLAG_DISCARD);
             pv->unfinished               = 0;
         }
         if (len > 0 && pout_len <= 0)
@@ -983,16 +974,12 @@ static hb_buffer_t *copy_frame( hb_work_private_t *pv )
     reordered_data_t * reordered = NULL;
     hb_buffer_t      * out;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     // no need to copy the frame data when decoding with QSV to opaque memory
     if (pv->qsv.decode &&
-        pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_OPAQUE_MEMORY)
+        pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_VIDEO_MEMORY)
     {
-        out = hb_frame_buffer_init(pv->frame->format, pv->frame->width, pv->frame->height);
-        hb_avframe_set_video_buffer_flags(out, pv->frame, (AVRational){1,1});
-
-        out->qsv_details.qsv_atom = pv->frame->data[2];
-        out->qsv_details.ctx      = pv->job->qsv.ctx;
+        out = hb_qsv_copy_frame(pv->frame, pv->job->qsv.ctx);
     }
     else
 #endif
@@ -1127,46 +1114,18 @@ static hb_buffer_t *copy_frame( hb_work_private_t *pv )
     return out;
 }
 
-static AVFilterContext * append_filter(hb_work_private_t * pv,
-                                       const char * name, const char * args)
-{
-    AVFilterContext * filter;
-    int               result;
-
-    result = avfilter_graph_create_filter(&filter, avfilter_get_by_name(name),
-                                          name, args, NULL,
-                                          pv->video_filters.graph);
-    if (result < 0)
-    {
-        return NULL;
-    }
-    if (pv->video_filters.last != NULL)
-    {
-        result = avfilter_link(pv->video_filters.last, 0, filter, 0);
-        if (result < 0)
-        {
-            avfilter_free(filter);
-            return NULL;
-        }
-    }
-    pv->video_filters.last = filter;
-
-    return filter;
-}
-
 int reinit_video_filters(hb_work_private_t * pv)
 {
-    char            * sws_flags;
-    int               result;
-    AVFilterContext * avfilter;
-    char            * graph_str = NULL, * filter_str;
-    AVFilterInOut   * in = NULL, * out = NULL;
-    int               orig_width;
-    int               orig_height;
+    int                orig_width;
+    int                orig_height;
+    hb_value_array_t * filters;
+    hb_dict_t        * settings;
+    hb_filter_init_t   filter_init;
+    enum AVPixelFormat pix_fmt;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (pv->qsv.decode &&
-        pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_OPAQUE_MEMORY)
+        pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_VIDEO_MEMORY)
     {
         // Can't use software filters when decoding with QSV opaque memory
         return 0;
@@ -1179,6 +1138,7 @@ int reinit_video_filters(hb_work_private_t * pv)
         // of incoming video if not even.
         orig_width = pv->context->width & ~1;
         orig_height = pv->context->height & ~1;
+        pix_fmt = AV_PIX_FMT_YUV420P;
     }
     else
     {
@@ -1193,9 +1153,10 @@ int reinit_video_filters(hb_work_private_t * pv)
             orig_width = pv->job->title->geometry.width;
             orig_height = pv->job->title->geometry.height;
         }
+        pix_fmt = pv->job->pix_fmt;
     }
 
-    if (AV_PIX_FMT_YUV420P == pv->frame->format  &&
+    if (pix_fmt            == pv->frame->format  &&
         orig_width         == pv->frame->width   &&
         orig_height        == pv->frame->height  &&
         HB_ROTATION_0      == pv->title->rotation)
@@ -1220,19 +1181,6 @@ int reinit_video_filters(hb_work_private_t * pv)
 
     // New filter required, create filter graph
     close_video_filters(pv);
-    pv->video_filters.graph = avfilter_graph_alloc();
-    if (pv->video_filters.graph == NULL)
-    {
-        hb_log("reinit_video_filters: avfilter_graph_alloc failed");
-        goto fail;
-    }
-    sws_flags = hb_strdup_printf("flags=%d", SWS_LANCZOS|SWS_ACCURATE_RND);
-    // avfilter_graph_free uses av_free to release scale_sws_opts.  Due
-    // to the hacky implementation of av_free/av_malloc on windows,
-    // you must av_malloc anything that is av_free'd.
-    pv->video_filters.graph->scale_sws_opts = av_malloc(strlen(sws_flags) + 1);
-    strcpy(pv->video_filters.graph->scale_sws_opts, sws_flags);
-    free(sws_flags);
 
     int clock_min, clock_max, clock;
     hb_rational_t vrate;
@@ -1241,100 +1189,65 @@ int reinit_video_filters(hb_work_private_t * pv)
     vrate.num = clock;
     vrate.den = pv->duration * (clock / 90000.);
 
-    if (AV_PIX_FMT_YUV420P != pv->frame->format ||
+    filters = hb_value_array_init();
+    if (pix_fmt            != pv->frame->format ||
         orig_width         != pv->frame->width  ||
         orig_height        != pv->frame->height)
     {
 
-        filter_str = hb_strdup_printf(
-                        "scale='w=%d:h=%d:flags=lanczos+accurate_rnd',"
-                        "format='pix_fmts=yuv420p'",
-                        orig_width, orig_height);
-        graph_str = hb_append_filter_string(graph_str, filter_str);
-        free(filter_str);
+        settings = hb_dict_init();
+        hb_dict_set(settings, "w", hb_value_int(orig_width));
+        hb_dict_set(settings, "h", hb_value_int(orig_height));
+        hb_dict_set(settings, "flags", hb_value_string("lanczos+accurate_rnd"));
+        hb_avfilter_append_dict(filters, "scale", settings);
+
+        settings = hb_dict_init();
+        hb_dict_set(settings, "pix_fmts", hb_value_string("yuv420p"));
+        hb_avfilter_append_dict(filters, "format", settings);
     }
     if (pv->title->rotation != HB_ROTATION_0)
     {
         switch (pv->title->rotation)
         {
             case HB_ROTATION_90:
-                filter_str = "transpose='dir=cclock'";
+                settings = hb_dict_init();
+                hb_dict_set(settings, "dir", hb_value_string("cclock"));
+                hb_avfilter_append_dict(filters, "transpose", settings);
                 break;
             case HB_ROTATION_180:
-                filter_str = "hflip,vflip";
+                hb_avfilter_append_dict(filters, "hflip", hb_value_null());
+                hb_avfilter_append_dict(filters, "vflip", hb_value_null());
                 break;
             case HB_ROTATION_270:
-                filter_str = "transpose='dir=clock'";
+                settings = hb_dict_init();
+                hb_dict_set(settings, "dir", hb_value_string("clock"));
+                hb_avfilter_append_dict(filters, "transpose", settings);
                 break;
             default:
                 hb_log("reinit_video_filters: Unknown rotation, failed");
-                goto fail;
         }
-        graph_str = hb_append_filter_string(graph_str, filter_str);
     }
 
-    // Build filter input
-    filter_str = hb_strdup_printf(
-                "width=%d:height=%d:pix_fmt=%d:sar=%d/%d:"
-                "time_base=%d/%d:frame_rate=%d/%d",
-                pv->frame->width, pv->frame->height,
-                pv->frame->format,
-                pv->frame->sample_aspect_ratio.num,
-                pv->frame->sample_aspect_ratio.den,
-                1, 1, vrate.num, vrate.den);
+    filter_init.pix_fmt           = pv->frame->format;
+    filter_init.geometry.width    = pv->frame->width;
+    filter_init.geometry.height   = pv->frame->height;
+    filter_init.geometry.par.num  = pv->frame->sample_aspect_ratio.num;
+    filter_init.geometry.par.den  = pv->frame->sample_aspect_ratio.den;
+    filter_init.time_base.num     = 1;
+    filter_init.time_base.den     = 1;
+    filter_init.vrate.num         = vrate.num;
+    filter_init.vrate.den         = vrate.den;
 
-    avfilter = append_filter(pv, "buffer", filter_str);
-    free(filter_str);
-    if (avfilter == NULL)
+    pv->video_filters.graph = hb_avfilter_graph_init(filters, &filter_init);
+    if (pv->video_filters.graph == NULL)
     {
-        hb_error("reinit_video_filters: failed to create buffer source filter");
-        goto fail;
-    }
-    pv->video_filters.input = avfilter;
-
-    // Build the filter graph
-    result = avfilter_graph_parse2(pv->video_filters.graph,
-                                   graph_str, &in, &out);
-    if (result < 0 || in == NULL || out == NULL)
-    {
-        hb_error("reinit_video_filters: avfilter_graph_parse2 failed (%s)",
-                 graph_str);
+        hb_error("reinit_video_filters: failed to create filter graph");
         goto fail;
     }
 
-    // Link input to filter graph
-    result = avfilter_link(pv->video_filters.last, 0, in->filter_ctx, 0);
-    if (result < 0)
-    {
-        goto fail;
-    }
-    pv->video_filters.last  = out->filter_ctx;
-
-    // Build filter output and append to filter graph
-    avfilter = append_filter(pv, "buffersink", NULL);
-    if (avfilter == NULL)
-    {
-        hb_error("reinit_video_filters: failed to create buffer output filter");
-        goto fail;
-    }
-    pv->video_filters.output = avfilter;
-
-    result = avfilter_graph_config(pv->video_filters.graph, NULL);
-    if (result < 0)
-    {
-        hb_error("reinit_video_filters: failed to configure filter graph");
-        goto fail;
-    }
-
-    free(graph_str);
-    avfilter_inout_free(&in);
-    avfilter_inout_free(&out);
     return 0;
 
 fail:
-    free(graph_str);
-    avfilter_inout_free(&in);
-    avfilter_inout_free(&out);
     close_video_filters(pv);
 
     return 1;
@@ -1347,21 +1260,15 @@ static void filter_video(hb_work_private_t *pv)
     {
         int result;
 
-        result = av_buffersrc_add_frame(pv->video_filters.input, pv->frame);
-        if (result < 0) {
-            hb_error("filter_video: failed to add frame");
-        } else {
-            result = av_buffersink_get_frame(pv->video_filters.output, pv->frame);
-        }
+        hb_avfilter_add_frame(pv->video_filters.graph, pv->frame);
+        result = hb_avfilter_get_frame(pv->video_filters.graph, pv->frame);
         while (result >= 0)
         {
             hb_buffer_t * buf = copy_frame(pv);
             hb_buffer_list_append(&pv->list, buf);
             av_frame_unref(pv->frame);
             ++pv->nframes;
-
-            result = av_buffersink_get_frame(pv->video_filters.output,
-                                             pv->frame);
+            result = hb_avfilter_get_frame(pv->video_filters.graph, pv->frame);
         }
     }
     else
@@ -1415,6 +1322,7 @@ static int decodeFrame( hb_work_private_t * pv, packet_info_t * packet_info )
         {
             avp.flags |= AV_PKT_FLAG_KEY;
         }
+        avp.flags  |= packet_info->discard * AV_PKT_FLAG_DISCARD;
     }
     else
     {
@@ -1440,17 +1348,6 @@ static int decodeFrame( hb_work_private_t * pv, packet_info_t * packet_info )
         ++pv->decode_errors;
         return 0;
     }
-
-#ifdef USE_QSV
-    if (pv->qsv.decode &&
-        pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_OPAQUE_MEMORY &&
-        pv->job->qsv.ctx == NULL && pv->video_codec_opened > 0)
-    {
-        // this is quite late, but we can't be certain that the QSV context is
-        // available until after we call avcodec_send_packet() at least once
-        pv->job->qsv.ctx = pv->context->priv_data;
-    }
-#endif
 
     do
     {
@@ -1494,29 +1391,47 @@ static int decavcodecvInit( hb_work_object_t * w, hb_job_t * job )
         pv->next_pts = 0;
     hb_buffer_list_clear(&pv->list);
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if ((pv->qsv.decode = hb_qsv_decode_is_enabled(job)))
     {
         pv->qsv.codec_name = hb_qsv_decode_get_codec_name(w->codec_param);
         pv->qsv.config.io_pattern = MFX_IOPATTERN_OUT_SYSTEM_MEMORY;
-#if 0 // TODO: re-implement QSV zerocopy path
-        hb_qsv_info_t *info = hb_qsv_info_get(job->vcodec);
-        if (info != NULL)
+        if(hb_qsv_full_path_is_enabled(job))
         {
-            // setup the QSV configuration
-            pv->qsv.config.io_pattern         = MFX_IOPATTERN_OUT_OPAQUE_MEMORY;
-            pv->qsv.config.impl_requested     = info->implementation;
-            pv->qsv.config.async_depth        = job->qsv.async_depth;
-            pv->qsv.config.sync_need          =  0;
-            pv->qsv.config.usage_threaded     =  1;
-            pv->qsv.config.additional_buffers = 64; // FIFO_LARGE
-            if (info->capabilities & HB_QSV_CAP_RATECONTROL_LA)
+            hb_qsv_info_t *info = hb_qsv_info_get(job->vcodec);
+            if (info != NULL)
             {
-                // more surfaces may be needed for the lookahead
-                pv->qsv.config.additional_buffers = 160;
+                // setup the QSV configuration
+                pv->qsv.config.io_pattern         = MFX_IOPATTERN_OUT_VIDEO_MEMORY;
+                pv->qsv.config.impl_requested     = info->implementation;
+                pv->qsv.config.async_depth        = job->qsv.async_depth;
+                pv->qsv.config.sync_need          =  0;
+                pv->qsv.config.usage_threaded     =  1;
+                pv->qsv.config.additional_buffers = 64; // FIFO_LARGE
+                if (info->capabilities & HB_QSV_CAP_RATECONTROL_LA)
+                {
+                    // more surfaces may be needed for the lookahead
+                    pv->qsv.config.additional_buffers = 160;
+                }
+                if(!pv->job->qsv.ctx)
+                {
+                    pv->job->qsv.ctx = av_mallocz(sizeof(hb_qsv_context));
+                    if(!pv->job->qsv.ctx)
+                    {
+                        hb_error( "decavcodecvInit: qsv ctx alloc failed" );
+                        return 1;
+                    }
+                    hb_qsv_add_context_usage(pv->job->qsv.ctx, 0);
+                    pv->job->qsv.ctx->dec_space = av_mallocz(sizeof(hb_qsv_space));
+                    if(!pv->job->qsv.ctx->dec_space)
+                    {
+                        hb_error( "decavcodecvInit: dec_space alloc failed" );
+                        return 1;
+                    }
+                    pv->job->qsv.ctx->dec_space->is_init_done = 1;
+                }
             }
         }
-#endif // QSV zerocopy path
     }
 #endif
 
@@ -1525,7 +1440,7 @@ static int decavcodecvInit( hb_work_object_t * w, hb_job_t * job )
         pv->threads = HB_FFMPEG_THREADS_AUTO;
     }
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (pv->qsv.decode)
     {
         pv->codec = avcodec_find_decoder_by_name(pv->qsv.codec_name);
@@ -1553,16 +1468,18 @@ static int decavcodecvInit( hb_work_object_t * w, hb_job_t * job )
         avcodec_parameters_to_context(pv->context,
                                   ic->streams[pv->title->video_id]->codecpar);
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         if (pv->qsv.decode &&
-            pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_OPAQUE_MEMORY)
+            pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_VIDEO_MEMORY)
         {
-            // set the QSV configuration before opening the decoder
-            pv->context->hwaccel_context = &pv->qsv.config;
+            // assign callbacks
+            pv->context->get_format = hb_qsv_get_format;
+            pv->context->get_buffer2 = hb_qsv_get_buffer;
+            pv->context->hwaccel_context = 0;
         }
 #endif
 
-        // Set encoder opts...
+        // Set encoder opts
         AVDictionary * av_opts = NULL;
         av_dict_set( &av_opts, "refcounted_frames", "1", 0 );
         if (pv->title->flags & HBTF_NO_IDR)
@@ -1570,7 +1487,7 @@ static int decavcodecvInit( hb_work_object_t * w, hb_job_t * job )
             av_dict_set( &av_opts, "flags", "output_corrupt", 0 );
         }
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         if (pv->qsv.decode && pv->context->codec_id == AV_CODEC_ID_HEVC)
         {
             av_dict_set( &av_opts, "load_plugin", "hevc_hw", 0 );
@@ -1686,9 +1603,9 @@ static int decodePacket( hb_work_object_t * w )
         pv->context->error_concealment = FF_EC_GUESS_MVS|FF_EC_DEBLOCK;
 
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
         if (pv->qsv.decode &&
-            pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_OPAQUE_MEMORY)
+            pv->qsv.config.io_pattern == MFX_IOPATTERN_OUT_VIDEO_MEMORY)
         {
             // set the QSV configuration before opening the decoder
             pv->context->hwaccel_context = &pv->qsv.config;
@@ -1844,6 +1761,7 @@ static int decavcodecvWork( hb_work_object_t * w, hb_buffer_t ** buf_in,
         pv->packet_info.scr_sequence = in->s.scr_sequence;
         pv->packet_info.new_chap     = in->s.new_chap;
         pv->packet_info.frametype    = in->s.frametype;
+        pv->packet_info.discard      = !!(in->s.flags & HB_FLAG_DISCARD);
     }
     for (pos = 0; pos < in->size; pos += len)
     {
@@ -1898,6 +1816,7 @@ static int decavcodecvWork( hb_work_object_t * w, hb_buffer_t ** buf_in,
             pv->packet_info.scr_sequence = in->s.scr_sequence;
             pv->packet_info.new_chap     = in->s.new_chap;
             pv->packet_info.frametype    = in->s.frametype;
+            pv->packet_info.discard      = !!(in->s.flags & HB_FLAG_DISCARD);
             pv->unfinished               = 0;
         }
         if (len > 0 && pout_len <= 0)
@@ -2005,12 +1924,23 @@ static int get_color_prim(int color_primaries, hb_geometry_t geometry, hb_ration
     {
         case AVCOL_PRI_BT709:
             return HB_COLR_PRI_BT709;
+        case AVCOL_PRI_BT470M:
+            return HB_COLR_PRI_BT470M;
         case AVCOL_PRI_BT470BG:
             return HB_COLR_PRI_EBUTECH;
-        case AVCOL_PRI_BT470M:
         case AVCOL_PRI_SMPTE170M:
         case AVCOL_PRI_SMPTE240M:
             return HB_COLR_PRI_SMPTEC;
+        case AVCOL_PRI_FILM:
+            return HB_COLR_PRI_FILM;
+        case AVCOL_PRI_SMPTE428:
+            return HB_COLR_PRI_SMPTE428;
+        case AVCOL_PRI_SMPTE431:
+            return HB_COLR_PRI_SMPTE431;
+        case AVCOL_PRI_SMPTE432:
+            return HB_COLR_PRI_SMPTE432;
+        case AVCOL_PRI_JEDEC_P22:
+            return HB_COLR_PRI_JEDEC_P22;
         case AVCOL_PRI_BT2020:
             return HB_COLR_PRI_BT2020;
         default:
@@ -2033,6 +1963,24 @@ static int get_color_transfer(int color_trc)
 {
     switch (color_trc)
     {
+        case AVCOL_TRC_GAMMA22:
+            return HB_COLR_TRA_GAMMA22;
+        case AVCOL_TRC_GAMMA28:
+            return HB_COLR_TRA_GAMMA28;
+        case AVCOL_TRC_SMPTE170M:
+            return HB_COLR_TRA_SMPTE170M;
+        case AVCOL_TRC_LINEAR:
+            return HB_COLR_TRA_LINEAR;
+        case AVCOL_TRC_LOG:
+            return HB_COLR_TRA_LOG;
+        case AVCOL_TRC_LOG_SQRT:
+            return HB_COLR_TRA_LOG_SQRT;
+        case AVCOL_TRC_IEC61966_2_4:
+            return HB_COLR_TRA_IEC61966_2_4;
+        case AVCOL_TRC_BT1361_ECG:
+            return HB_COLR_TRA_BT1361_ECG;
+        case AVCOL_TRC_IEC61966_2_1:
+            return HB_COLR_TRA_IEC61966_2_1;
         case AVCOL_TRC_SMPTE240M:
             return HB_COLR_TRA_SMPTE240M;
         case AVCOL_TRC_SMPTEST2084:
@@ -2053,19 +2001,30 @@ static int get_color_matrix(int colorspace, hb_geometry_t geometry)
 {
     switch (colorspace)
     {
+        case AVCOL_SPC_RGB:
+            return HB_COLR_MAT_RGB;
         case AVCOL_SPC_BT709:
             return HB_COLR_MAT_BT709;
         case AVCOL_SPC_FCC:
+            return HB_COLR_MAT_FCC;
         case AVCOL_SPC_BT470BG:
+            return HB_COLR_MAT_BT470BG;
         case AVCOL_SPC_SMPTE170M:
-        case AVCOL_SPC_RGB: // libswscale rgb2yuv
             return HB_COLR_MAT_SMPTE170M;
         case AVCOL_SPC_SMPTE240M:
             return HB_COLR_MAT_SMPTE240M;
+        case AVCOL_SPC_YCGCO:
+            return HB_COLR_MAT_YCGCO;
         case AVCOL_SPC_BT2020_NCL:
             return HB_COLR_MAT_BT2020_NCL;
         case AVCOL_SPC_BT2020_CL:
             return HB_COLR_MAT_BT2020_CL;
+        case AVCOL_SPC_CHROMA_DERIVED_NCL:
+            return HB_COLR_MAT_CD_NCL;
+        case AVCOL_SPC_CHROMA_DERIVED_CL:
+            return HB_COLR_MAT_CD_CL;
+        case AVCOL_SPC_ICTCP:
+            return HB_COLR_MAT_ICTCP;
         default:
         {
             if ((geometry.width >= 1280 || geometry.height >= 720)||
@@ -2126,13 +2085,17 @@ static int decavcodecvInfo( hb_work_object_t *w, hb_work_info_t *info )
     info->level = pv->context->level;
     info->name = pv->context->codec->name;
 
-    info->color_prim = get_color_prim(pv->context->color_primaries, info->geometry, info->rate);
+    info->pix_fmt        = pv->context->pix_fmt;
+    info->color_prim     = get_color_prim(pv->context->color_primaries,
+                                          info->geometry, info->rate);
     info->color_transfer = get_color_transfer(pv->context->color_trc);
-    info->color_matrix = get_color_matrix(pv->context->colorspace, info->geometry);
+    info->color_matrix   = get_color_matrix(pv->context->colorspace,
+                                            info->geometry);
+    info->color_range    = pv->context->color_range;
 
     info->video_decode_support = HB_DECODE_SUPPORT_SW;
 
-#ifdef USE_QSV
+#if HB_PROJECT_FEATURE_QSV
     if (avcodec_find_decoder_by_name(hb_qsv_decode_get_codec_name(pv->context->codec_id)))
     {
         switch (pv->context->codec_id)
@@ -2220,6 +2183,7 @@ static void decodeAudio(hb_work_private_t *pv, packet_info_t * packet_info)
         avp.size = packet_info->size;
         avp.pts  = packet_info->pts;
         avp.dts  = AV_NOPTS_VALUE;
+        avp.flags |= packet_info->discard * AV_PKT_FLAG_DISCARD;
     }
     else
     {

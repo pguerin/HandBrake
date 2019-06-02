@@ -32,6 +32,7 @@ namespace HandBrakeWPF.ViewModels
     using HandBrakeWPF.Helpers;
     using HandBrakeWPF.Model;
     using HandBrakeWPF.Model.Audio;
+    using HandBrakeWPF.Model.Options;
     using HandBrakeWPF.Model.Subtitles;
     using HandBrakeWPF.Properties;
     using HandBrakeWPF.Services.Encode.EventArgs;
@@ -69,7 +70,7 @@ namespace HandBrakeWPF.ViewModels
     {
         #region Private Variables and Services
 
-        private readonly IQueueProcessor queueProcessor;
+        private readonly IQueueService queueProcessor;
         private readonly IPresetService presetService;
         private readonly IErrorService errorService;
         private readonly IUpdateService updateService;
@@ -117,8 +118,6 @@ namespace HandBrakeWPF.ViewModels
             IQueueViewModel queueViewModel, IMetaDataViewModel metaDataViewModel, INotifyIconService notifyIconService)
             : base(userSettingService)
         {
-            HandBrakeUtils.RegisterLogger();
-
             this.scanService = scanService;
             this.presetService = presetService;
             this.errorService = errorService;
@@ -127,7 +126,7 @@ namespace HandBrakeWPF.ViewModels
             this.notifyIconService = notifyIconService;
             this.QueueViewModel = queueViewModel;
             this.userSettingService = userSettingService;
-            this.queueProcessor = IoC.Get<IQueueProcessor>();
+            this.queueProcessor = IoC.Get<IQueueService>();
 
             this.SummaryViewModel = summaryViewModel;
             this.PictureSettingsViewModel = pictureSettingsViewModel;
@@ -185,8 +184,6 @@ namespace HandBrakeWPF.ViewModels
             // Setup Commands
             this.QueueCommand = new QueueCommands(this.QueueViewModel);
 
-            LogManager.Init();
-            HandBrakeInstanceManager.Init();
         }
 
         #region View Model Properties
@@ -591,8 +588,7 @@ namespace HandBrakeWPF.ViewModels
 
                             if (value == this.ScannedSource.ScanPath)
                             {
-                                this.Destination = this.CurrentTask.Destination;
-                                this.errorService.ShowMessageBox(Resources.Main_SourceDestinationMatchError, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
+                                this.errorService.ShowMessageBox(Resources.Main_MatchingFileOverwriteWarning, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
                                 return;
                             }
                         }
@@ -1356,12 +1352,21 @@ namespace HandBrakeWPF.ViewModels
                 return new AddQueueError(Resources.Main_SetDestination, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
+            if (this.Destination.ToLower() == this.ScannedSource.ScanPath.ToLower())
+            {
+                return new AddQueueError(Resources.Main_MatchingFileOverwriteWarning, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
             if (File.Exists(this.CurrentTask.Destination))
             {
-                MessageBoxResult result = this.errorService.ShowMessageBox(string.Format(Resources.Main_QueueOverwritePrompt, Path.GetFileName(this.CurrentTask.Destination)), Resources.Question, MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (result == MessageBoxResult.No)
+                FileOverwriteBehaviour behaviour = (FileOverwriteBehaviour)this.userSettingService.GetUserSetting<int>(UserSettingConstants.FileOverwriteBehaviour, typeof(int));
+                if (behaviour == FileOverwriteBehaviour.Ask)
                 {
-                    return null; // Handled by the above action.
+                    MessageBoxResult result = this.errorService.ShowMessageBox(string.Format(Resources.Main_QueueOverwritePrompt, Path.GetFileName(this.CurrentTask.Destination)), Resources.Question, MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result == MessageBoxResult.No)
+                    {
+                        return null; // Handled by the above action.
+                    }
                 }
             }
 
@@ -1378,21 +1383,10 @@ namespace HandBrakeWPF.ViewModels
             }
 
             // Sanity check the filename
-            if (!string.IsNullOrEmpty(this.Destination) && FileHelper.FilePathHasInvalidChars(this.Destination))
+            if (FileHelper.FilePathHasInvalidChars(this.Destination))
             {
                 this.NotifyOfPropertyChange(() => this.Destination);
                 return new AddQueueError(Resources.Main_InvalidDestination, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-
-            if (this.Destination == this.ScannedSource.ScanPath)
-            {
-                this.Destination = null;
-                return new AddQueueError(Resources.Main_SourceDestinationMatchError, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-
-            if (this.scannedSource != null && !string.IsNullOrEmpty(this.scannedSource.ScanPath) && this.Destination.ToLower() == this.scannedSource.ScanPath.ToLower())
-            {
-                return new AddQueueError(Resources.Main_MatchingFileOverwriteWarning, Resources.Error, MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             // defer to subtitle's validation messages
@@ -1418,6 +1412,15 @@ namespace HandBrakeWPF.ViewModels
             }
 
             return null;
+        }
+
+        public void AddToQueueWithErrorHandling()
+        {
+            var addError = this.AddToQueue();
+            if (addError != null)
+            {
+                this.errorService.ShowMessageBox(addError.Message, addError.Header, addError.Buttons, addError.ErrorType);
+            }
         }
 
         /// <summary>
@@ -1541,11 +1544,11 @@ namespace HandBrakeWPF.ViewModels
             OpenFileDialog dialog = new OpenFileDialog { Filter = "All files (*.*)|*.*" };
 
             string mruDir = this.GetMru(Constants.FileScanMru);
-            if (!string.IsNullOrEmpty(mruDir))
+            if (!string.IsNullOrEmpty(mruDir) && Directory.Exists(mruDir))
             {
                 dialog.InitialDirectory = mruDir;
             }
-
+            
             bool? dialogResult = dialog.ShowDialog();
 
             if (dialogResult.HasValue && dialogResult.Value)
@@ -1713,7 +1716,7 @@ namespace HandBrakeWPF.ViewModels
                 string[] fileNames = e.Data.GetData(DataFormats.FileDrop, true) as string[];
                 if (fileNames != null && fileNames.Any() && (File.Exists(fileNames[0]) || Directory.Exists(fileNames[0])))
                 {
-                    string videoContent = fileNames.FirstOrDefault(f => Path.GetExtension(f)?.ToLower() != ".srt");
+                    string videoContent = fileNames.FirstOrDefault(f => Path.GetExtension(f)?.ToLower() != ".srt" && Path.GetExtension(f)?.ToLower() != ".ssa");
                     if (!string.IsNullOrEmpty(videoContent))
                     {
                         this.StartScan(videoContent, 0);
@@ -1727,10 +1730,11 @@ namespace HandBrakeWPF.ViewModels
                             Resources.Error,
                             MessageBoxButton.OK,
                             MessageBoxImage.Error);
+                        return;
                     }
 
                     // StartScan is not synchronous, so for now we don't support adding both srt and video file at the same time. 
-                    string[] subtitleFiles = fileNames.Where(f => Path.GetExtension(f)?.ToLower() == ".srt").ToArray();
+                    string[] subtitleFiles = fileNames.Where(f => Path.GetExtension(f)?.ToLower() == ".srt" || Path.GetExtension(f)?.ToLower() == ".ssa").ToArray();
                     if (subtitleFiles.Any())
                     {
                         this.SwitchTab(5);
@@ -1758,9 +1762,13 @@ namespace HandBrakeWPF.ViewModels
                 Filter = "mp4|*.mp4;*.m4v|mkv|*.mkv|webm|*.webm", 
                 CheckPathExists = true, 
                 AddExtension = true, 
-                DefaultExt = ".mp4", 
-                OverwritePrompt = true, 
+                DefaultExt = ".mp4",
             };
+
+            saveFileDialog.OverwritePrompt =
+                (FileOverwriteBehaviour)this.userSettingService.GetUserSetting<int>(
+                    UserSettingConstants.FileOverwriteBehaviour,
+                    typeof(int)) == FileOverwriteBehaviour.Ask;
 
             string extension = Path.GetExtension(this.CurrentTask.Destination);
 
@@ -1772,7 +1780,7 @@ namespace HandBrakeWPF.ViewModels
                                                  : (this.CurrentTask.OutputFormat == OutputFormat.WebM ? 3 : 0));
 
             string mruDir = this.GetMru(Constants.FileSaveMru);
-            if (!string.IsNullOrEmpty(mruDir))
+            if (!string.IsNullOrEmpty(mruDir) && Directory.Exists(mruDir))
             {
                 saveFileDialog.InitialDirectory = mruDir;
             }
@@ -1890,6 +1898,7 @@ namespace HandBrakeWPF.ViewModels
             {
                 this.selectedPreset.Update(new EncodeTask(this.CurrentTask), new AudioBehaviours(this.AudioViewModel.AudioBehaviours), new SubtitleBehaviours(this.SubtitleViewModel.SubtitleBehaviours));
                 this.presetService.Update(this.selectedPreset);
+                this.IsModifiedPreset = false;
 
                 this.errorService.ShowMessageBox(
                         Resources.Main_PresetUpdated, Resources.Updated, MessageBoxButton.OK, MessageBoxImage.Information);
